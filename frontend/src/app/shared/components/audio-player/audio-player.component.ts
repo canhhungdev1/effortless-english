@@ -397,13 +397,28 @@ export class AudioPlayerComponent implements OnChanges, OnDestroy {
   speeds = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['audioUrl']) {
-      this.isPlaying = false;
-      this.progress = 0;
+    if (changes['audioUrl'] && !changes['audioUrl'].firstChange) {
       this.currentTime = '0:00';
+      this.progress = 0;
       if (this.audioRef?.nativeElement) {
-        this.audioRef.nativeElement.load(); // Reload audio source
+        this.audioRef.nativeElement.load();
+        // If it was already playing or we want to force start
+        if (this.isPlaying) {
+          this.play();
+        }
       }
+    }
+  }
+
+  play() {
+    const audio = this.audioRef?.nativeElement;
+    if (audio) {
+      audio.play().then(() => {
+        this.isPlaying = true;
+      }).catch(e => {
+        console.warn('Autoplay prevented by browser', e);
+        this.isPlaying = false;
+      });
     }
   }
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -35,7 +35,7 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
             *ngFor="let tab of availableTabs"
             class="tab-btn"
             [class.active]="activeTab === tab.key"
-            (click)="activeTab = tab.key"
+            (click)="setActiveTab(tab.key)"
           >
             {{ tab.label }}
           </button>
@@ -117,18 +117,6 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
 
         <!-- Story Sections (Mini-Story, Point of View, Commentary) -->
         <div *ngIf="isStoryTab(activeTab)" class="content-card">
-          <!-- Sub-tabs for multiple parts -->
-          <div class="sub-tabs" *ngIf="getStories(activeTab).length > 1">
-            <button 
-              *ngFor="let story of getStories(activeTab); let i = index"
-              class="sub-tab-btn"
-              [class.active]="activeSubIndex[activeTab] === i"
-              (click)="selectSubStory(activeTab, i)"
-            >
-              {{ story.title || 'Part ' + (i + 1) }}
-            </button>
-          </div>
-
           <div class="content-header">
             <app-audio-player 
               #storyPlayer 
@@ -372,16 +360,13 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
   `]
 })
 export class LessonDetailComponent implements OnInit {
+  @ViewChild('vocabPlayer') vocabPlayer?: AudioPlayerComponent;
+  @ViewChild('storyPlayer') storyPlayer?: AudioPlayerComponent;
+
   lesson = signal<Lesson | undefined>(undefined);
   activeTab = 'mainArticle';
   availableTabs: { key: string; label: string }[] = [];
   showFlashcards = false;
-  
-  activeSubIndex: Record<string, number> = {
-    miniStories: 0,
-    commentaries: 0,
-    pointOfViews: 0
-  };
 
   constructor(
     private route: ActivatedRoute,
@@ -406,54 +391,64 @@ export class LessonDetailComponent implements OnInit {
   }
 
   isStoryTab(tab: string): boolean {
-    return ['miniStory', 'commentary', 'pointOfView'].includes(tab);
+    return tab.startsWith('miniStory') || tab.startsWith('commentary') || tab.startsWith('pointOfView');
   }
 
   getStories(tab: string): StoryContent[] {
     const lesson = this.lesson();
     if (!lesson) return [];
-    switch(tab) {
-      case 'miniStory': return lesson.miniStories || [];
-      case 'commentary': return lesson.commentaries || [];
-      case 'pointOfView': return lesson.pointOfViews || [];
-      default: return [];
-    }
+    if (tab.startsWith('miniStory')) return lesson.miniStories || [];
+    if (tab.startsWith('commentary')) return lesson.commentaries || [];
+    if (tab.startsWith('pointOfView')) return lesson.pointOfViews || [];
+    return [];
   }
 
   getActiveStory(tab: string): StoryContent | undefined {
-    const stories = this.getStories(tab);
-    const category = this.mapTabToCategory(tab);
-    const index = this.activeSubIndex[category] || 0;
-    return stories[index];
-  }
-
-  private mapTabToCategory(tab: string): string {
-    if (tab === 'miniStory') return 'miniStories';
-    if (tab === 'commentary') return 'commentaries';
-    if (tab === 'pointOfView') return 'pointOfViews';
-    return tab;
+    const lesson = this.lesson();
+    if (!lesson) return undefined;
+    
+    const [category, indexStr] = tab.split('_');
+    const index = parseInt(indexStr, 10);
+    
+    if (category === 'miniStory') return lesson.miniStories?.[index];
+    if (category === 'commentary') return lesson.commentaries?.[index];
+    if (category === 'pointOfView') return lesson.pointOfViews?.[index];
+    
+    return undefined;
   }
 
   getTabLabel(key: string): string {
     return this.availableTabs.find(t => t.key === key)?.label || '';
   }
 
-  selectSubStory(tab: string, index: number) {
-    const category = this.mapTabToCategory(tab);
-    this.activeSubIndex[category] = index;
-    const story = this.getActiveStory(tab);
-    if (story?.vttUrl && (!story.lines || story.lines.length === 0)) {
-      this.loadVtt(story.vttUrl, category as any, index);
-    }
+  setActiveTab(key: string) {
+    this.activeTab = key;
+    // Auto-play when switching
+    setTimeout(() => {
+      if (this.isStoryTab(key) && this.storyPlayer) {
+        this.storyPlayer.play();
+      } else if (key === 'vocabulary' && this.vocabPlayer) {
+        this.vocabPlayer.play();
+      }
+    });
   }
 
   private buildTabs(lesson: Lesson) {
     this.availableTabs = [];
     if (lesson.mainArticle) this.availableTabs.push({ key: 'mainArticle', label: 'Main Article' });
     if (lesson.vocabulary) this.availableTabs.push({ key: 'vocabulary', label: 'Vocabulary' });
-    if (lesson.miniStories?.length) this.availableTabs.push({ key: 'miniStory', label: 'Mini-Story' });
-    if (lesson.commentaries?.length) this.availableTabs.push({ key: 'commentary', label: 'Commentary' });
-    if (lesson.pointOfViews?.length) this.availableTabs.push({ key: 'pointOfView', label: 'Point of View' });
+    
+    lesson.miniStories?.forEach((s, i) => {
+      this.availableTabs.push({ key: `miniStory_${i}`, label: s.title || `Mini-Story ${i + 1}` });
+    });
+    
+    lesson.commentaries?.forEach((s, i) => {
+      this.availableTabs.push({ key: `commentary_${i}`, label: s.title || `Commentary ${i + 1}` });
+    });
+    
+    lesson.pointOfViews?.forEach((s, i) => {
+      this.availableTabs.push({ key: `pointOfView_${i}`, label: s.title || `Point of View ${i + 1}` });
+    });
   }
 
   private loadAllVtts(lesson: Lesson) {

@@ -4,6 +4,12 @@ dist/
 /out-tsc
 /bazel-out
 
+# Environment files
+.env
+.env.local
+.env.*
+!.env.example
+
 # Backend specific
 backend/.env
 backend/generated/prisma

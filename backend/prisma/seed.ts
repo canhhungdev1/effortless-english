@@ -66,49 +66,68 @@ The <strong>atmosphere</strong> is like a party. There are people everywhere. Fa
           ]
         }
       },
-      // MINI STORY A
       {
         lesson_id: dotd.id,
         type: 'MINI_STORY',
         title: 'Mini-Story A',
         audio_url: '/media/day-of-the-dead.mp3',
         vtt_url: '/media/day-of-the-dead.vtt',
+        data: { lines: [] }
+      }
+    ]
+  });
+  
+  // 4. Create Lesson: A Kiss
+  await prisma.lesson.deleteMany({ where: { id: 'a-kiss' } });
+  const aKiss = await prisma.lesson.create({
+    data: {
+      id: 'a-kiss',
+      course_id: 'effortless',
+      order: 2,
+      title: 'A Kiss',
+      progress: 0,
+    },
+  });
+
+  await prisma.lessonContent.createMany({
+    data: [
+      {
+        lesson_id: aKiss.id,
+        type: 'ARTICLE',
+        title: 'Main Story',
+        audio_url: '/media/orignal-course/a-kiss/1 A Kiss Audio.mp3',
+        vtt_url: '/media/orignal-course/a-kiss/1 A Kiss Audio.vtt',
+        content_en: 'Carlos buys a new car. It is a very expensive car...',
+        content_vi: 'Carlos mua một chiếc xe hơi mới. Đó là một chiếc xe rất đắt tiền...',
+      },
+      {
+        lesson_id: aKiss.id,
+        type: 'VOCABULARY',
+        title: 'Vocabulary Explanation',
+        audio_url: '/media/orignal-course/a-kiss/2 A Kiss Vocab.mp3',
+        vtt_url: '/media/orignal-course/a-kiss/2 A Kiss Vocab.vtt',
         data: {
-          lines: [
-            { text: 'AJ arrived in Guatemala on the Day of the Dead.', isHighlighted: false },
-            { text: 'Did AJ arrive in Guatemala on Christmas?', isHighlighted: false },
-            { text: 'No, AJ arrived in Guatemala on the Day of the Dead.', isHighlighted: false }
+          paragraphs: ['In this lesson we are going to learn about "Huge". Huge means very very big.'],
+          keywords: [
+            { word: 'Huge', phonetic: '/hjuːdʒ/', translation: 'Khổng lồ', example: 'It was a huge, blue, fast car.' }
           ]
         }
       },
-      // MINI STORY B
       {
-        lesson_id: dotd.id,
+        lesson_id: aKiss.id,
+        type: 'MINI_STORY',
+        title: 'Mini-Story A',
+        audio_url: '/media/orignal-course/a-kiss/3 A Kiss MS-A.mp3',
+        vtt_url: '/media/orignal-course/a-kiss/3 A Kiss MS-A.vtt',
+        data: { lines: [] }
+      },
+      {
+        lesson_id: aKiss.id,
         type: 'MINI_STORY',
         title: 'Mini-Story B',
-        audio_url: '/media/mini-story-b.mp3',
-        vtt_url: '/media/mini-story-b.vtt',
-        data: {
-          lines: [
-            { text: 'The atmosphere was like a party.', isHighlighted: false },
-            { text: 'Was the atmosphere somber and sad?', isHighlighted: false },
-            { text: 'No, the atmosphere was like a party.', isHighlighted: false }
-          ]
-        }
-      },
-      // POINT OF VIEW
-      {
-        lesson_id: dotd.id,
-        type: 'POINT_OF_VIEW',
-        title: 'POV: Past Tense',
-        audio_url: '/media/day-of-the-dead.mp3',
-        vtt_url: '/media/day-of-the-dead.vtt',
-        data: {
-          lines: [
-            { text: 'I arrived in Guatemala on the Day of the Dead.', isHighlighted: false },
-            { text: 'I was curious about this holiday.', isHighlighted: false }
-          ]
-        }
+        audio_url: '/media/orignal-course/a-kiss/4 A Kiss MS-B.mp3',
+        vtt_url: '/media/orignal-course/a-kiss/4 A Kiss MS-B.vtt',
+        data: { lines: [] }
       }
     ]
   });
