@@ -1,0 +1,62 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Course {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  level       String?
+  cover_image String?  @map("cover_image")
+  is_vip      Boolean  @default(false) @map("is_vip")
+  stage       Int      @default(1)
+  created_at  DateTime @default(now()) @map("created_at")
+  updated_at  DateTime @updatedAt @map("updated_at")
+
+  lessons Lesson[]
+
+  @@map("courses")
+}
+
+model Lesson {
+  id         String   @id @default(uuid())
+  course_id  String   @map("course_id")
+  order      Int      @default(0)
+  title      String
+  progress   Int      @default(0)
+  created_at DateTime @default(now()) @map("created_at")
+  updated_at DateTime @updatedAt @map("updated_at")
+
+  course   Course          @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  contents LessonContent[]
+
+  @@map("lessons")
+}
+
+model LessonContent {
+  id         String   @id @default(uuid())
+  lesson_id  String   @map("lesson_id")
+  type       String   // ARTICLE, VOCABULARY, MINI_STORY, POINT_OF_VIEW, COMMENTARY
+  title      String?  @map("title")
+  audio_url  String?  @map("audio_url")
+  vtt_url    String?  @map("vtt_url")
+  content_en String?  @map("content_en") // English text for Article
+  content_vi String?  @map("content_vi") // Vietnamese text for Article
+  data       Json?    // paragraphs, keywords, story lines, etc.
+  created_at DateTime @default(now()) @map("created_at")
+  updated_at DateTime @updatedAt @map("updated_at")
+
+  lesson Lesson @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
+
+  @@map("lesson_contents")
+}
