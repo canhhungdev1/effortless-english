@@ -4,6 +4,7 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Va
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CourseService } from '../../../core/services/course.service';
 import { QuillModule } from 'ngx-quill';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-admin-vocabulary-edit',
@@ -66,7 +67,10 @@ import { QuillModule } from 'ngx-quill';
             <div *ngFor="let kw of keywords.controls; let i=index" [formGroupName]="i" class="keyword-card">
               <div class="card-header">
                 <h5>Word #{{ i + 1 }}</h5>
-                <button type="button" class="remove-btn" (click)="removeKeyword(i)">🗑️</button>
+                <div class="header-actions">
+                  <button type="button" class="magic-btn" (click)="fetchFromApi(i)" title="Auto-fetch from Dictionary">✨ Fetch</button>
+                  <button type="button" class="remove-btn" (click)="removeKeyword(i)">🗑️</button>
+                </div>
               </div>
               <div class="card-grid">
                 <div class="form-group">
@@ -76,6 +80,13 @@ import { QuillModule } from 'ngx-quill';
                 <div class="form-group">
                   <label>Phonetic</label>
                   <input type="text" formControlName="phonetic" placeholder="e.g. /ˈætməsfɪər/">
+                </div>
+                <div class="form-group full-width">
+                  <label>Audio URL (Auto-fetched or Manual)</label>
+                  <div class="audio-input-group">
+                    <input type="text" formControlName="audio" placeholder="https://...">
+                    <button type="button" class="play-btn" *ngIf="keywords.at(i).get('audio')?.value" (click)="playKeywordAudio(i)">🔊</button>
+                  </div>
                 </div>
                 <div class="form-group full-width">
                   <label>Translation</label>
@@ -137,6 +148,23 @@ import { QuillModule } from 'ngx-quill';
       &.full-width { grid-column: span 2; }
     }
 
+    .audio-input-group {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      input { flex: 1; }
+    }
+
+    .play-btn {
+      background: #f1f5f9; border: 1px solid #e2e8f0; padding: 8px; border-radius: 8px; cursor: pointer; font-size: 18px;
+      &:hover { background: #e2e8f0; }
+    }
+
+    .magic-btn {
+      background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;
+      &:hover { background: #dcfce7; }
+    }
+
     .add-word-btn { background: #f0f9ff; color: #0284c7; border: 1px dashed #0284c7; padding: 6px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; &:hover { background: #e0f2fe; } }
 
     .keywords-list { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
@@ -145,7 +173,11 @@ import { QuillModule } from 'ngx-quill';
       border: 1px solid #e2e8f0;
       padding: 20px;
       border-radius: 12px;
-      .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; h5 { font-weight: 700; color: #1e293b; } }
+      .card-header { 
+        display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; 
+        h5 { font-weight: 700; color: #1e293b; }
+        .header-actions { display: flex; gap: 10px; align-items: center; }
+      }
       .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     }
 
@@ -181,7 +213,8 @@ export class AdminVocabularyEditComponent implements OnInit {
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private courseService: CourseService
+    private courseService: CourseService,
+    private http: HttpClient
   ) {
     this.vocabForm = this.fb.group({
       audioUrl: [''],
@@ -208,6 +241,7 @@ export class AdminVocabularyEditComponent implements OnInit {
     const kwGroup = this.fb.group({
       word: [data?.word || '', Validators.required],
       phonetic: [data?.phonetic || ''],
+      audio: [data?.audio || ''],
       translation: [data?.translation || '', Validators.required],
       example: [data?.example || '']
     });
@@ -228,7 +262,7 @@ export class AdminVocabularyEditComponent implements OnInit {
             this.vocabForm.patchValue({
               audioUrl: lesson.vocabulary.audioUrl,
               vttUrl: lesson.vocabulary.vttUrl || '',
-              explanation: lesson.vocabulary.paragraphs.join('') // Assuming they are HTML now
+              explanation: lesson.vocabulary.paragraphs.join('')
             });
             
             this.keywords.clear();
@@ -243,6 +277,41 @@ export class AdminVocabularyEditComponent implements OnInit {
     });
   }
 
+  fetchFromApi(index: number) {
+    const word = this.keywords.at(index).get('word')?.value;
+    if (!word) {
+      alert('Please enter a word first');
+      return;
+    }
+
+    this.http.get<any>(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`).subscribe({
+      next: (res) => {
+        if (res && res.length > 0) {
+          const entry = res[0];
+          const phonetic = entry.phonetic || (entry.phonetics.find((p: any) => p.text)?.text);
+          const audio = entry.phonetics.find((p: any) => p.audio && p.audio !== '')?.audio;
+          
+          this.keywords.at(index).patchValue({
+            phonetic: phonetic || '',
+            audio: audio || ''
+          });
+
+          // Optional: if translation is empty, we could fill it with the first definition (in English)
+          // But since we need Vietnamese, we leave it to the admin or integrate translation API later
+        }
+      },
+      error: () => alert('Word not found in dictionary')
+    });
+  }
+
+  playKeywordAudio(index: number) {
+    const url = this.keywords.at(index).get('audio')?.value;
+    if (url) {
+      const audio = new Audio(url);
+      audio.play();
+    }
+  }
+
   saveVocabulary() {
     if (this.vocabForm.invalid) return;
     this.isSaving.set(true);
@@ -251,7 +320,6 @@ export class AdminVocabularyEditComponent implements OnInit {
     const data = {
       audioUrl: formVal.audioUrl,
       vttUrl: formVal.vttUrl,
-      // For compatibility, we'll store the whole HTML explanation as one paragraph or split if needed
       extraData: {
         paragraphs: [formVal.explanation], 
         keywords: formVal.keywords
@@ -271,3 +339,4 @@ export class AdminVocabularyEditComponent implements OnInit {
     });
   }
 }
+

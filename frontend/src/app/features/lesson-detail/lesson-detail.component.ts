@@ -104,8 +104,11 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
                 class="keyword-card"
               >
                 <div class="kw-header">
-                  <span class="kw-word">{{ kw.word }}</span>
-                  <span class="kw-phonetic">{{ kw.phonetic }}</span>
+                  <div class="kw-main-info">
+                    <span class="kw-word">{{ kw.word }}</span>
+                    <span class="kw-phonetic">{{ kw.phonetic }}</span>
+                  </div>
+                  <button *ngIf="kw.audio" class="kw-audio-btn" (click)="playAudio(kw.audio); $event.stopPropagation()" title="Listen pronunciation">🔊</button>
                 </div>
                 <p class="kw-translation">{{ kw.translation }}</p>
                 <p class="kw-example"><strong>Example:</strong> {{ kw.example }}</p>
@@ -263,9 +266,30 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
 
     .kw-header {
       display: flex;
-      align-items: baseline;
+      align-items: center;
+      justify-content: space-between;
       gap: 8px;
       margin-bottom: 6px;
+    }
+    .kw-main-info {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .kw-audio-btn {
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 50%;
+      transition: var(--transition);
+      line-height: 1;
+      
+      &:hover {
+        background: var(--primary-light);
+        transform: scale(1.1);
+      }
     }
     .kw-word {
       font-size: 17px;
@@ -497,6 +521,11 @@ export class LessonDetailComponent implements OnInit {
 
   onLineClick(line: StoryLine, player: AudioPlayerComponent) {
     if (line.start !== undefined) player.seekToTime(line.start);
+  }
+
+  playAudio(url: string) {
+    const audio = new Audio(url);
+    audio.play();
   }
 
   private loadVtt(vttUrl: string, type: 'miniStories' | 'commentaries' | 'pointOfViews' | 'vocabulary', index: number = 0) {

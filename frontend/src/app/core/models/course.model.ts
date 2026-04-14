@@ -33,6 +33,7 @@ export interface MainArticle {
 export interface VocabularyWord {
   word: string;
   phonetic: string;
+  audio?: string;
   translation: string;
   example: string;
 }
