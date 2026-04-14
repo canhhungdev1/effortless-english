@@ -157,7 +157,7 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
     </div>
   `,
   styles: [`
-    .lesson-detail { max-width: 1100px; }
+    // .lesson-detail { max-width: 1100px; }
     .lesson-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 24px; padding-top: 8px; }
     .back-link { width: 36px; height: 36px; border-radius: 50%; background: var(--bg-gray); display: flex; align-items: center; justify-content: center; color: var(--text-primary); transition: var(--transition); &:hover { background: var(--border-color); } }
     .lesson-title { font-size: 28px; font-weight: 800; color: var(--text-primary); line-height: 1.2; }
@@ -203,18 +203,9 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
     .article-english .article-text { font-size: 16px; line-height: 1.8; color: var(--text-primary); }
     .article-vietnamese .article-text { font-size: 15px; line-height: 1.8; color: var(--text-secondary); font-style: italic; }
     .vocabulary-layout { 
-      display: grid; 
-      grid-template-columns: 1fr 360px; 
+      display: flex;
+      flex-direction: column;
       gap: 24px; 
-      align-items: start;
-    }
-    @media (max-width: 1100px) {
-      .vocabulary-layout { 
-        grid-template-columns: 1fr; 
-      }
-      .keywords-panel {
-        position: static;
-      }
     }
     .vocab-paragraphs { 
       display: flex; 
@@ -233,9 +224,7 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
       background: var(--bg-white); 
       border: 1px solid var(--border-light); 
       border-radius: var(--radius-lg); 
-      padding: 24px; 
-      position: sticky; 
-      top: 80px; 
+      padding: 28px 32px; 
       box-shadow: var(--shadow-sm);
     }
     .keywords-title {
@@ -247,9 +236,9 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
       border-bottom: 2px solid var(--primary-light);
     }
     .keywords-list {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
     }
     .keyword-card {
       padding: 16px;
@@ -325,7 +314,6 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
     }
     .story-card { 
       width: 100%; 
-      max-width: 700px; 
       max-height: 450px; 
       overflow-y: auto; 
       padding: 32px 40px; 
