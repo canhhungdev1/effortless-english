@@ -161,7 +161,7 @@ import { FileUploadComponent } from '../../../shared/components/file-upload/file
 
     .form-grid {
       display: grid;
-      grid-template-columns: 1.5fr 1fr;
+      grid-template-columns: 1.5fr minmax(0, 1fr);
       gap: 40px;
     }
 
@@ -201,7 +201,7 @@ import { FileUploadComponent } from '../../../shared/components/file-upload/file
 
     .form-row {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 16px;
       align-items: center;
     }
@@ -247,6 +247,18 @@ import { FileUploadComponent } from '../../../shared/components/file-upload/file
       font-size: 12px;
       margin-top: 4px;
       font-weight: 500;
+    }
+
+    @media (max-width: 1024px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+    }
+    @media (max-width: 600px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
     }
   `]
 })

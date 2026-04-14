@@ -157,6 +157,7 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
     </div>
   `,
   styles: [`
+    .lesson-detail { width: 100%; }
     .lesson-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 24px; padding-top: 8px; }
     .back-link { width: 36px; height: 36px; border-radius: 50%; background: var(--bg-gray); display: flex; align-items: center; justify-content: center; color: var(--text-primary); transition: var(--transition); &:hover { background: var(--border-color); } }
     .lesson-title { font-size: 28px; font-weight: 800; color: var(--text-primary); line-height: 1.2; }
@@ -199,8 +200,8 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
       grid-template-columns: 1fr 1fr; 
       gap: 40px; 
     }
-    .article-english .article-text { font-size: 16px; line-height: 1.8; color: var(--text-primary); }
-    .article-vietnamese .article-text { font-size: 15px; line-height: 1.8; color: var(--text-secondary); font-style: italic; }
+    .article-english .article-text { font-size: 16px; line-height: 1.8; color: var(--text-primary); overflow-wrap: break-word; word-break: break-word; }
+    .article-vietnamese .article-text { font-size: 15px; line-height: 1.8; color: var(--text-secondary); font-style: italic; overflow-wrap: break-word; word-break: break-word; }
     .vocabulary-layout { 
       display: flex;
       flex-direction: column;
@@ -322,7 +323,7 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
       box-shadow: var(--shadow-sm);
       position: relative;
     }
-    .story-line { padding: 14px 20px; &.clickable-line { cursor: pointer; } &.highlighted { border-left: 3px solid var(--highlight-border); background: var(--highlight-bg); p { color: var(--highlight-text); font-weight: 600; } } }
+    .story-line { padding: 14px 20px; overflow-wrap: break-word; word-break: break-word; &.clickable-line { cursor: pointer; } &.highlighted { border-left: 3px solid var(--highlight-border); background: var(--highlight-bg); p { color: var(--highlight-text); font-weight: 600; } } }
     .empty-state { text-align: center; color: var(--text-muted); padding: 40px; font-style: italic; }
     @media (max-width: 900px) {
       .article-body { 

@@ -132,7 +132,7 @@ import { HttpClient } from '@angular/common/http';
     .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
     .section-label { font-size: 16px; font-weight: 700; color: #334155; }
 
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
     .form-group {
       margin-bottom: 16px;
       label { display: block; font-weight: 600; font-size: 13px; color: #64748b; margin-bottom: 6px; }
@@ -167,7 +167,7 @@ import { HttpClient } from '@angular/common/http';
 
     .add-word-btn { background: #f0f9ff; color: #0284c7; border: 1px dashed #0284c7; padding: 6px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; &:hover { background: #e0f2fe; } }
 
-    .keywords-list { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .keywords-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
     .keyword-card {
       background: #f8fafc;
       border: 1px solid #e2e8f0;
@@ -178,12 +178,14 @@ import { HttpClient } from '@angular/common/http';
         h5 { font-weight: 700; color: #1e293b; }
         .header-actions { display: flex; gap: 10px; align-items: center; }
       }
-      .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
     }
 
     .remove-btn { color: #ef4444; font-size: 18px; filter: grayscale(1); cursor: pointer; &:hover { filter: none; } }
 
     ::ng-deep .custom-quill {
+      width: 100%;
+      display: block;
       .ql-toolbar { border-radius: 8px 8px 0 0; background: #f8fafc; }
       .ql-container { border-radius: 0 0 8px 8px; min-height: 250px; font-size: 15px; }
     }
@@ -191,6 +193,20 @@ import { HttpClient } from '@angular/common/http';
     .loading-state { padding: 80px; text-align: center; color: #64748b; }
     .spinner { margin: 0 auto 16px; width: 40px; height: 40px; border: 3px solid #f1f5f9; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 1200px) {
+      .keywords-list {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media (max-width: 768px) {
+      .form-row, .card-grid {
+        grid-template-columns: 1fr;
+      }
+      .form-group.full-width {
+        grid-column: auto;
+      }
+    }
   `]
 })
 export class AdminVocabularyEditComponent implements OnInit {
@@ -203,8 +219,13 @@ export class AdminVocabularyEditComponent implements OnInit {
 
   quillModules = {
     toolbar: [
-      ['bold', 'italic', 'underline'],
+      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ 'color': [] }, { 'background': [] }],
       [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+      [{ 'align': [] }],
+      ['blockquote', 'code-block'],
+      ['link', 'image', 'video'],
       ['clean']
     ]
   };

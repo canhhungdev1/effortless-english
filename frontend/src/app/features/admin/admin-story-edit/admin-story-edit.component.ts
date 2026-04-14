@@ -109,7 +109,7 @@ import { FileUploadComponent } from '../../../shared/components/file-upload/file
     .header-btns { display: flex; gap: 12px; }
     .section-label { font-size: 16px; font-weight: 700; color: #334155; }
 
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
     .form-group {
       margin-bottom: 16px;
       label { display: block; font-weight: 600; font-size: 13px; color: #64748b; margin-bottom: 6px; }
@@ -142,6 +142,21 @@ import { FileUploadComponent } from '../../../shared/components/file-upload/file
     .loading-state { padding: 80px; text-align: center; color: #64748b; }
     .spinner { margin: 0 auto 16px; width: 40px; height: 40px; border: 3px solid #f1f5f9; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 900px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media (max-width: 600px) {
+      .line-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .line-inputs {
+        width: 100%;
+      }
+    }
   `]
 })
 export class AdminStoryEditComponent implements OnInit {

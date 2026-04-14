@@ -114,7 +114,7 @@ import { FileUploadComponent } from '../../../shared/components/file-upload/file
 
     .section-label { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: #334155; }
 
-    .form-group.row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .form-group.row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
     
     .input-with-upload {
       display: flex;
@@ -139,7 +139,7 @@ import { FileUploadComponent } from '../../../shared/components/file-upload/file
 
     .content-split {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 24px;
       margin-top: 24px;
       border-top: 1px solid #f1f5f9;
@@ -147,6 +147,8 @@ import { FileUploadComponent } from '../../../shared/components/file-upload/file
     }
 
     ::ng-deep .custom-quill {
+      width: 100%;
+      display: block;
       .ql-toolbar {
         border-radius: 8px 8px 0 0;
         border-color: #e2e8f0;
@@ -168,6 +170,15 @@ import { FileUploadComponent } from '../../../shared/components/file-upload/file
     }
     .spinner { margin: 0 auto 16px; width: 40px; height: 40px; border: 3px solid #f1f5f9; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 1200px) {
+      .content-split {
+        grid-template-columns: 1fr;
+      }
+      .form-group.row {
+        grid-template-columns: 1fr;
+      }
+    }
   `]
 })
 export class AdminArticleEditComponent implements OnInit {
@@ -180,9 +191,13 @@ export class AdminArticleEditComponent implements OnInit {
 
   quillModules = {
     toolbar: [
-      ['bold', 'italic', 'underline'],
+      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ 'color': [] }, { 'background': [] }],
       [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-      ['link'],
+      [{ 'align': [] }],
+      ['blockquote', 'code-block'],
+      ['link', 'image', 'video'],
       ['clean']
     ]
   };
