@@ -39,11 +39,10 @@ import { Course, Lesson } from '../../core/models/course.model';
         <div class="lesson-list">
           <a
             *ngFor="let lesson of lessons(); let i = index"
-            [routerLink]="['/courses', course()?.id, 'lessons', lesson.id]"
+            [routerLink]="['/courses', course()?.slug, 'lessons', lesson.slug]"
             class="lesson-item"
-            [class.first]="i === 0"
           >
-            <div class="lesson-icon" [class.active]="i === 0">
+            <div class="lesson-icon">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M6.5 5.5v9l7-4.5-7-4.5z"/>
               </svg>
@@ -216,16 +215,13 @@ import { Course, Lesson } from '../../core/models/course.model';
       border-radius: var(--radius-md);
       transition: var(--transition);
       cursor: pointer;
+      text-decoration: none;
+    }
 
-      &:hover {
-        border-color: var(--primary-light);
-        box-shadow: var(--shadow-sm);
-      }
-
-      &.first {
-        border-color: var(--primary);
-        background: var(--primary-light);
-      }
+    .lesson-item:hover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      box-shadow: var(--shadow-sm);
     }
 
     .lesson-icon {
@@ -238,11 +234,12 @@ import { Course, Lesson } from '../../core/models/course.model';
       justify-content: center;
       color: var(--text-muted);
       flex-shrink: 0;
+      transition: var(--transition);
+    }
 
-      &.active {
-        background: var(--primary);
-        color: white;
-      }
+    .lesson-item:hover .lesson-icon {
+      background: var(--primary);
+      color: white;
     }
 
     .lesson-info {
@@ -303,11 +300,11 @@ import { Course, Lesson } from '../../core/models/course.model';
       border-radius: var(--radius-xl);
       transition: var(--transition);
       flex-shrink: 0;
+    }
 
-      &:hover {
-        background: var(--primary);
-        color: white;
-      }
+    .lesson-item:hover .learn-btn {
+      background: var(--primary);
+      color: white;
     }
 
     /* Tablet */
@@ -429,11 +426,11 @@ export class CourseDetailComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    const courseId = this.route.snapshot.paramMap.get('courseId')!;
-    this.courseService.getCourse(courseId).subscribe(course => {
+    const courseSlug = this.route.snapshot.paramMap.get('courseSlug')!;
+    this.courseService.getCourse(courseSlug).subscribe(course => {
       this.course.set(course);
     });
-    this.courseService.getLessons(courseId).subscribe(lessons => {
+    this.courseService.getLessons(courseSlug).subscribe(lessons => {
       this.lessons.set(lessons);
     });
   }

@@ -17,6 +17,7 @@ export class CoursesService {
 
     return courses.map(course => ({
       id: course.id,
+      slug: course.slug,
       title: course.title,
       description: course.description,
       level: course.level,
@@ -27,9 +28,14 @@ export class CoursesService {
     }));
   }
 
-  async findOne(id: string) {
-    const course = await this.prisma.course.findUnique({
-      where: { id },
+  async findOne(idOrSlug: string) {
+    const course = await this.prisma.course.findFirst({
+      where: {
+        OR: [
+          { id: idOrSlug },
+          { slug: idOrSlug }
+        ]
+      },
       include: {
         _count: {
           select: { lessons: true }
@@ -41,6 +47,7 @@ export class CoursesService {
 
     return {
       id: course.id,
+      slug: course.slug,
       title: course.title,
       description: course.description,
       level: course.level,

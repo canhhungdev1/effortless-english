@@ -12,12 +12,12 @@ export const routes: Routes = [
           import('./features/home/home.component').then(m => m.HomeComponent)
       },
       {
-        path: 'courses/:courseId',
+        path: 'courses/:courseSlug',
         loadComponent: () =>
           import('./features/course-detail/course-detail.component').then(m => m.CourseDetailComponent)
       },
       {
-        path: 'courses/:courseId/lessons/:lessonId',
+        path: 'courses/:courseSlug/lessons/:lessonSlug',
         loadComponent: () =>
           import('./features/lesson-detail/lesson-detail.component').then(m => m.LessonDetailComponent)
       }

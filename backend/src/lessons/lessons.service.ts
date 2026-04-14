@@ -5,14 +5,22 @@ import { PrismaService } from '../prisma/prisma.service';
 export class LessonsService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(courseId: string) {
+  async findAll(courseIdOrSlug: string) {
     const lessons = await this.prisma.lesson.findMany({
-      where: { course_id: courseId },
+      where: {
+        course: {
+          OR: [
+            { id: courseIdOrSlug },
+            { slug: courseIdOrSlug }
+          ]
+        }
+      },
       orderBy: { order: 'asc' },
     });
 
     return lessons.map(lesson => ({
       id: lesson.id,
+      slug: lesson.slug,
       courseId: lesson.course_id,
       order: lesson.order,
       title: lesson.title,
@@ -20,18 +28,24 @@ export class LessonsService {
     }));
   }
 
-  async findOne(courseId: string, id: string) {
-    const lesson = await this.prisma.lesson.findUnique({
-      where: { id },
+  async findOne(courseIdOrSlug: string, idOrSlug: string) {
+    const lesson = await this.prisma.lesson.findFirst({
+      where: {
+        AND: [
+          { OR: [{ id: idOrSlug }, { slug: idOrSlug }] },
+          { course: { OR: [{ id: courseIdOrSlug }, { slug: courseIdOrSlug }] } }
+        ]
+      },
       include: {
         contents: true,
       },
     });
 
-    if (!lesson || lesson.course_id !== courseId) return null;
+    if (!lesson) return null;
 
     const result: any = {
       id: lesson.id,
+      slug: lesson.slug,
       courseId: lesson.course_id,
       order: lesson.order,
       title: lesson.title,

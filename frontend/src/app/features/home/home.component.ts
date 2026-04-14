@@ -16,7 +16,7 @@ import { Course } from '../../core/models/course.model';
       <div class="course-grid">
         <a
           *ngFor="let course of courses()"
-          [routerLink]="['/courses', course.id]"
+          [routerLink]="['/courses', course.slug]"
           class="course-card"
         >
           <div class="card-image">

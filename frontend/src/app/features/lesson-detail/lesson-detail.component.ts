@@ -17,7 +17,7 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
     <div class="lesson-detail" *ngIf="lesson()">
       <!-- Lesson Header -->
       <div class="lesson-header">
-        <a [routerLink]="['/courses', lesson()?.courseId]" class="back-link">
+        <a [routerLink]="['/courses', courseSlug]" class="back-link">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
             <path d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"/>
           </svg>
@@ -102,7 +102,6 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
               <div
                 *ngFor="let kw of lesson()?.vocabulary?.keywords; let i = index"
                 class="keyword-card"
-                [class.active]="i === 0"
               >
                 <div class="kw-header">
                   <span class="kw-word">{{ kw.word }}</span>
@@ -252,19 +251,16 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
       border-radius: var(--radius-md);
       transition: var(--transition);
       background: var(--bg-light);
-
-      &:hover {
-        border-color: var(--primary-light);
-        transform: translateX(4px);
-        box-shadow: var(--shadow-sm);
-      }
-
-      &.active {
-        border-color: var(--primary);
-        background: var(--primary-light);
-        box-shadow: var(--shadow-md);
-      }
+      cursor: pointer;
     }
+
+    .keyword-card:hover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      transform: translateX(4px);
+      box-shadow: var(--shadow-md);
+    }
+
     .kw-header {
       display: flex;
       align-items: baseline;
@@ -368,6 +364,9 @@ export class LessonDetailComponent implements OnInit {
   availableTabs: { key: string; label: string }[] = [];
   showFlashcards = false;
 
+  courseSlug = '';
+  lessonSlug = '';
+
   constructor(
     private route: ActivatedRoute,
     private courseService: CourseService,
@@ -375,10 +374,10 @@ export class LessonDetailComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    const courseId = this.route.snapshot.paramMap.get('courseId')!;
-    const lessonId = this.route.snapshot.paramMap.get('lessonId')!;
+    this.courseSlug = this.route.snapshot.paramMap.get('courseSlug')!;
+    this.lessonSlug = this.route.snapshot.paramMap.get('lessonSlug')!;
 
-    this.courseService.getLesson(courseId, lessonId).subscribe(lesson => {
+    this.courseService.getLesson(this.courseSlug, this.lessonSlug).subscribe(lesson => {
       if (lesson) {
         this.lesson.set(lesson);
         this.buildTabs(lesson);

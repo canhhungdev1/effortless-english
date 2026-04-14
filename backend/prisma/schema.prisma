@@ -14,6 +14,7 @@ datasource db {
 
 model Course {
   id          String   @id @default(uuid())
+  slug        String   @unique @default("")
   title       String
   description String?
   level       String?
@@ -31,6 +32,7 @@ model Course {
 model Lesson {
   id         String   @id @default(uuid())
   course_id  String   @map("course_id")
+  slug       String @default("")
   order      Int      @default(0)
   title      String
   progress   Int      @default(0)
@@ -40,6 +42,7 @@ model Lesson {
   course   Course          @relation(fields: [course_id], references: [id], onDelete: Cascade)
   contents LessonContent[]
 
+  @@unique([course_id, slug])
   @@map("lessons")
 }
 

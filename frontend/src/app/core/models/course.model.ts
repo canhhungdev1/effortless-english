@@ -1,5 +1,6 @@
 export interface Course {
   id: string;
+  slug: string;
   title: string;
   description: string;
   level: 'Beginner' | 'Pre-Intermediate' | 'Intermediate' | 'Advanced';
@@ -10,6 +11,7 @@ export interface Course {
 
 export interface Lesson {
   id: string;
+  slug: string;
   courseId: string;
   order: number;
   title: string;

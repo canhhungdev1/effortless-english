@@ -8,14 +8,15 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log('Seeding data...');
+  console.log('Seeding data with slugs and organized media structure...');
 
-  // 1. Create Courses
+  // 1. Create Course: Effortless English
+  const effortlessSlug = 'effortless-english';
   const effortless = await prisma.course.upsert({
-    where: { id: 'effortless' },
+    where: { slug: effortlessSlug },
     update: {},
     create: {
-      id: 'effortless',
+      slug: effortlessSlug,
       title: 'Effortless English Original Course',
       description: 'Khóa học phản xạ tiếng Anh tự động của AJ Hoge.',
       level: 'Pre-Intermediate',
@@ -25,21 +26,23 @@ async function main() {
     },
   });
 
-  // 2. Create Lesson: Day Of The Dead
-  // Delete existing to start fresh
-  await prisma.lesson.deleteMany({ where: { id: 'day-of-the-dead' } });
+  // --- LESSON 1: Day Of The Dead ---
+  const dotdSlug = 'day-of-the-dead';
+  const dotdMediaBase = `/media/${effortlessSlug}/${dotdSlug}`;
+
+  // Clean up existing lesson to avoid conflict or duplicate content
+  await prisma.lesson.deleteMany({ where: { slug: dotdSlug, course_id: effortless.id } });
 
   const dotd = await prisma.lesson.create({
     data: {
-      id: 'day-of-the-dead',
-      course_id: 'effortless',
+      course_id: effortless.id,
+      slug: dotdSlug,
       order: 1,
       title: 'Day Of The Dead',
       progress: 0,
     },
   });
 
-  // 3. Add Content for Day Of The Dead
   await prisma.lessonContent.createMany({
     data: [
       {
@@ -53,8 +56,8 @@ The <strong>atmosphere</strong> is like a party. There are people everywhere. Fa
       {
         lesson_id: dotd.id,
         type: 'VOCABULARY',
-        audio_url: '/media/day-of-the-dead.mp3',
-        vtt_url: '/media/vocabulary.vtt',
+        audio_url: `${dotdMediaBase}/vocabulary.mp3`,
+        vtt_url: `${dotdMediaBase}/vocabulary.vtt`,
         data: {
           paragraphs: [
             'In this part, we talk about "Somber". Somber means serious or sad.',
@@ -70,19 +73,23 @@ The <strong>atmosphere</strong> is like a party. There are people everywhere. Fa
         lesson_id: dotd.id,
         type: 'MINI_STORY',
         title: 'Mini-Story A',
-        audio_url: '/media/day-of-the-dead.mp3',
-        vtt_url: '/media/day-of-the-dead.vtt',
+        audio_url: `${dotdMediaBase}/mini-story-a.mp3`,
+        vtt_url: `${dotdMediaBase}/mini-story-a.vtt`,
         data: { lines: [] }
       }
     ]
   });
   
-  // 4. Create Lesson: A Kiss
-  await prisma.lesson.deleteMany({ where: { id: 'a-kiss' } });
+  // --- LESSON 2: A Kiss ---
+  const aKissSlug = 'a-kiss';
+  const aKissMediaBase = `/media/${effortlessSlug}/${aKissSlug}`;
+
+  await prisma.lesson.deleteMany({ where: { slug: aKissSlug, course_id: effortless.id } });
+  
   const aKiss = await prisma.lesson.create({
     data: {
-      id: 'a-kiss',
-      course_id: 'effortless',
+      course_id: effortless.id,
+      slug: aKissSlug,
       order: 2,
       title: 'A Kiss',
       progress: 0,
@@ -95,8 +102,8 @@ The <strong>atmosphere</strong> is like a party. There are people everywhere. Fa
         lesson_id: aKiss.id,
         type: 'ARTICLE',
         title: 'Main Story',
-        audio_url: '/media/orignal-course/a-kiss/1 A Kiss Audio.mp3',
-        vtt_url: '/media/orignal-course/a-kiss/1 A Kiss Audio.vtt',
+        audio_url: `${aKissMediaBase}/article.mp3`,
+        vtt_url: `${aKissMediaBase}/article.vtt`,
         content_en: 'Carlos buys a new car. It is a very expensive car...',
         content_vi: 'Carlos mua một chiếc xe hơi mới. Đó là một chiếc xe rất đắt tiền...',
       },
@@ -104,8 +111,8 @@ The <strong>atmosphere</strong> is like a party. There are people everywhere. Fa
         lesson_id: aKiss.id,
         type: 'VOCABULARY',
         title: 'Vocabulary Explanation',
-        audio_url: '/media/orignal-course/a-kiss/2 A Kiss Vocab.mp3',
-        vtt_url: '/media/orignal-course/a-kiss/2 A Kiss Vocab.vtt',
+        audio_url: `${aKissMediaBase}/vocabulary.mp3`,
+        vtt_url: `${aKissMediaBase}/vocabulary.vtt`,
         data: {
           paragraphs: ['In this lesson we are going to learn about "Huge". Huge means very very big.'],
           keywords: [
@@ -117,22 +124,22 @@ The <strong>atmosphere</strong> is like a party. There are people everywhere. Fa
         lesson_id: aKiss.id,
         type: 'MINI_STORY',
         title: 'Mini-Story A',
-        audio_url: '/media/orignal-course/a-kiss/3 A Kiss MS-A.mp3',
-        vtt_url: '/media/orignal-course/a-kiss/3 A Kiss MS-A.vtt',
+        audio_url: `${aKissMediaBase}/mini-story-a.mp3`,
+        vtt_url: `${aKissMediaBase}/mini-story-a.vtt`,
         data: { lines: [] }
       },
       {
         lesson_id: aKiss.id,
         type: 'MINI_STORY',
         title: 'Mini-Story B',
-        audio_url: '/media/orignal-course/a-kiss/4 A Kiss MS-B.mp3',
-        vtt_url: '/media/orignal-course/a-kiss/4 A Kiss MS-B.vtt',
+        audio_url: `${aKissMediaBase}/mini-story-b.mp3`,
+        vtt_url: `${aKissMediaBase}/mini-story-b.vtt`,
         data: { lines: [] }
       }
     ]
   });
 
-  console.log('Seeding complete.');
+  console.log('Seeding complete with slug-based media structure.');
 }
 
 main()
