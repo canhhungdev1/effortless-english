@@ -4,11 +4,12 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CourseService } from '../../../core/services/course.service';
 import { Course } from '../../../core/models/course.model';
+import { FileUploadComponent } from '../../../shared/components/file-upload/file-upload.component';
 
 @Component({
   selector: 'app-admin-course-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, FileUploadComponent],
   template: `
     <div class="edit-header">
       <div class="header-left">
@@ -68,7 +69,10 @@ import { Course } from '../../../core/models/course.model';
 
           <div class="form-group">
             <label for="coverImage">Cover Image URL</label>
-            <input type="text" id="coverImage" formControlName="coverImage" placeholder="assets/images/...">
+            <div class="input-with-upload">
+              <input type="text" id="coverImage" formControlName="coverImage" placeholder="assets/images/...">
+              <app-file-upload accept="image/*" label="Image" (uploaded)="courseForm.get('coverImage')?.setValue($event)"></app-file-upload>
+            </div>
           </div>
 
           <div class="form-row">
@@ -186,6 +190,13 @@ import { Course } from '../../../core/models/course.model';
 
         &:focus { border-color: var(--primary); }
       }
+    }
+
+    .input-with-upload {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      input { flex: 1; }
     }
 
     .form-row {

@@ -4,6 +4,11 @@ import { LessonsService } from './lessons.service';
 @Controller('api/lessons')
 export class LessonsController {
   constructor(private readonly lessonsService: LessonsService) {}
+  
+  @Post('reorder')
+  reorder(@Body() lessons: { id: string; order: number }[]) {
+    return this.lessonsService.reorder(lessons);
+  }
 
   @Get(':courseId')
   findAll(@Param('courseId') courseId: string) {

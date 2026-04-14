@@ -63,4 +63,8 @@ export class CourseService {
   getAdminStats(): Observable<any> {
     return this.http.get(`${this.apiUrl}/admin/stats`);
   }
+
+  updateLessonsOrder(lessons: { id: string; order: number }[]): Observable<any> {
+    return this.http.post(`${this.apiUrl}/lessons/reorder`, lessons);
+  }
 }

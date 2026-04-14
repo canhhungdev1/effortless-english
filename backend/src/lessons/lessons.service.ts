@@ -193,4 +193,15 @@ export class LessonsService {
       where: { id }
     });
   }
+
+  async reorder(lessons: { id: string; order: number }[]) {
+    return this.prisma.$transaction(
+      lessons.map((lesson) =>
+        this.prisma.lesson.update({
+          where: { id: lesson.id },
+          data: { order: lesson.order },
+        }),
+      ),
+    );
+  }
 }

@@ -4,11 +4,12 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CourseService } from '../../../core/services/course.service';
 import { QuillModule } from 'ngx-quill';
+import { FileUploadComponent } from '../../../shared/components/file-upload/file-upload.component';
 
 @Component({
   selector: 'app-admin-article-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, QuillModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, QuillModule, FileUploadComponent],
   template: `
     <div class="edit-header">
       <div class="header-left">
@@ -32,14 +33,20 @@ import { QuillModule } from 'ngx-quill';
         <!-- Media Links -->
         <div class="form-section media-section">
           <h4 class="section-label">Media Resources</h4>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="audioUrl">Audio URL</label>
-              <input type="text" id="audioUrl" formControlName="audioUrl" placeholder="/media/course/lesson/article.mp3">
+          <div class="form-group row">
+            <div class="col">
+              <label>Audio URL</label>
+              <div class="input-with-upload">
+                <input type="text" formControlName="audioUrl" placeholder="/media/...">
+                <app-file-upload accept="audio/*" label="Audio" (uploaded)="articleForm.get('audioUrl')?.setValue($event)"></app-file-upload>
+              </div>
             </div>
-            <div class="form-group">
-              <label for="vttUrl">VTT URL (Optional)</label>
-              <input type="text" id="vttUrl" formControlName="vttUrl" placeholder="/media/course/lesson/article.vtt">
+            <div class="col">
+              <label>VTT URL (Optional)</label>
+              <div class="input-with-upload">
+                <input type="text" formControlName="vttUrl" placeholder="/media/...">
+                <app-file-upload accept=".vtt" label="VTT" (uploaded)="articleForm.get('vttUrl')?.setValue($event)"></app-file-upload>
+              </div>
             </div>
           </div>
         </div>
@@ -107,7 +114,14 @@ import { QuillModule } from 'ngx-quill';
 
     .section-label { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: #334155; }
 
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .form-group.row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    
+    .input-with-upload {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      input { flex: 1; }
+    }
 
     .form-group {
       margin-bottom: 20px;

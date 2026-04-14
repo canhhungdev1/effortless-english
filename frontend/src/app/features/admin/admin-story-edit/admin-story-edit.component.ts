@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CourseService } from '../../../core/services/course.service';
+import { FileUploadComponent } from '../../../shared/components/file-upload/file-upload.component';
 
 @Component({
   selector: 'app-admin-story-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, FileUploadComponent],
   template: `
     <div class="edit-header">
       <div class="header-left">
@@ -37,11 +38,17 @@ import { CourseService } from '../../../core/services/course.service';
             </div>
             <div class="form-group">
               <label>Audio URL</label>
-              <input type="text" formControlName="audioUrl" placeholder="/media/...">
+              <div class="input-with-upload">
+                <input type="text" formControlName="audioUrl" placeholder="/media/...">
+                <app-file-upload accept="audio/*" label="Audio" (uploaded)="storyForm.get('audioUrl')?.setValue($event)"></app-file-upload>
+              </div>
             </div>
             <div class="form-group">
               <label>VTT URL (Optional)</label>
-              <input type="text" formControlName="vttUrl" placeholder="/media/...">
+              <div class="input-with-upload">
+                <input type="text" formControlName="vttUrl" placeholder="/media/...">
+                <app-file-upload accept=".vtt" label="VTT" (uploaded)="storyForm.get('vttUrl')?.setValue($event)"></app-file-upload>
+              </div>
             </div>
           </div>
         </div>
@@ -107,6 +114,13 @@ import { CourseService } from '../../../core/services/course.service';
       margin-bottom: 16px;
       label { display: block; font-weight: 600; font-size: 13px; color: #64748b; margin-bottom: 6px; }
       input { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; outline: none; transition: border-color 0.2s; &:focus { border-color: var(--primary); } }
+    }
+
+    .input-with-upload {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      input { flex: 1; }
     }
 
     .add-line-btn { background: #f0fdf4; color: #16a34a; border: 1px dashed #16a34a; padding: 6px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; &:hover { background: #dcfce7; } }
