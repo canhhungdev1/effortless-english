@@ -157,7 +157,6 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
     </div>
   `,
   styles: [`
-    // .lesson-detail { max-width: 1100px; }
     .lesson-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 24px; padding-top: 8px; }
     .back-link { width: 36px; height: 36px; border-radius: 50%; background: var(--bg-gray); display: flex; align-items: center; justify-content: center; color: var(--text-primary); transition: var(--transition); &:hover { background: var(--border-color); } }
     .lesson-title { font-size: 28px; font-weight: 800; color: var(--text-primary); line-height: 1.2; }
