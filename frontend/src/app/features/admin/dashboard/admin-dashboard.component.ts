@@ -1,38 +1,68 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { CourseService } from '../../../core/services/course.service';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   template: `
-    <div class="dashboard-grid">
+    <div class="dashboard-grid" *ngIf="stats()">
       <div class="stat-card">
         <div class="stat-icon courses">📚</div>
         <div class="stat-info">
           <span class="stat-label">Total Courses</span>
-          <span class="stat-value">3</span>
+          <span class="stat-value">{{ stats().courses }}</span>
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-icon lessons">📝</div>
         <div class="stat-info">
           <span class="stat-label">Total Lessons</span>
-          <span class="stat-value">12</span>
+          <span class="stat-value">{{ stats().lessons }}</span>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon students">👥</div>
+        <div class="stat-icon contents">🧩</div>
         <div class="stat-info">
-          <span class="stat-label">Total Students</span>
-          <span class="stat-value">1,250</span>
+          <span class="stat-label">Content Items</span>
+          <span class="stat-value">{{ stats().contents }}</span>
         </div>
       </div>
     </div>
 
-    <div class="welcome-section">
-      <h3>Welcome to Management System</h3>
-      <p>From here you can manage your English courses, lessons, and student progress.</p>
+    <div class="main-content-grid">
+      <div class="activity-section">
+        <div class="section-header">
+          <h3>Recent Activity</h3>
+          <p>Latest lesson updates and additions</p>
+        </div>
+        
+        <div class="activity-list" *ngIf="recentLessons().length > 0; else noActivity">
+          <div class="activity-item" *ngFor="let lesson of recentLessons()">
+            <div class="item-icon">📄</div>
+            <div class="item-info">
+              <div class="item-title">{{ lesson.title }}</div>
+              <div class="item-meta">
+                Course: <strong>{{ lesson.courseTitle }}</strong> • Updated {{ lesson.updatedAt | date:'short' }}
+              </div>
+            </div>
+            <a [routerLink]="['/admin/courses', lesson.courseId, 'lessons']" class="view-btn">View</a>
+          </div>
+        </div>
+        <ng-template #noActivity>
+           <p class="empty-msg">No recent activity found.</p>
+        </ng-template>
+      </div>
+
+      <div class="quick-links">
+        <h3>Quick Actions</h3>
+        <div class="link-grid">
+          <a routerLink="/admin/courses/new" class="q-link">Add New Course</a>
+          <a routerLink="/admin/courses" class="q-link">Browse Lessons</a>
+        </div>
+      </div>
     </div>
   `,
   styles: [`
@@ -66,35 +96,90 @@ import { CommonModule } from '@angular/common';
 
     .stat-icon.courses { background: #eff6ff; }
     .stat-icon.lessons { background: #fdf2f8; }
-    .stat-icon.students { background: #f0fdf4; }
+    .stat-icon.contents { background: #f0fdf4; }
 
-    .stat-info {
-      display: flex;
-      flex-direction: column;
+    .stat-info { display: flex; flex-direction: column; }
+    .stat-label { font-size: 14px; color: #64748b; font-weight: 500; }
+    .stat-value { font-size: 24px; font-weight: 700; color: #1e293b; }
+
+    .main-content-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 32px;
     }
 
-    .stat-label {
-      font-size: 14px;
-      color: #64748b;
-      font-weight: 500;
-    }
-
-    .stat-value {
-      font-size: 24px;
-      font-weight: 700;
-      color: #1e293b;
-    }
-
-    .welcome-section {
+    .activity-section {
       background: white;
-      padding: 40px;
       border-radius: 16px;
       border: 1px solid #e2e8f0;
-      text-align: center;
-
-      h3 { font-size: 24px; margin-bottom: 12px; color: #1e293b; }
-      p { color: #64748b; }
+      padding: 24px;
     }
+
+    .section-header {
+      margin-bottom: 24px;
+      h3 { font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+      p { font-size: 14px; color: #64748b; }
+    }
+
+    .activity-list { display: flex; flex-direction: column; gap: 16px; }
+    .activity-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px;
+      border-radius: 12px;
+      &:hover { background: #f8fafc; }
+      
+      .item-icon { width: 40px; height: 40px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+      .item-info { flex: 1; }
+      .item-title { font-weight: 600; color: #1e293b; font-size: 14px; }
+      .item-meta { font-size: 12px; color: #64748b; margin-top: 2px; }
+      
+      .view-btn { font-size: 13px; color: var(--primary); font-weight: 600; text-decoration: none; padding: 4px 12px; border: 1px solid var(--primary); border-radius: 6px; }
+    }
+
+    .quick-links {
+      background: #1e293b;
+      padding: 24px;
+      border-radius: 16px;
+      color: white;
+      h3 { font-size: 18px; margin-bottom: 20px; }
+      .link-grid { display: flex; flex-direction: column; gap: 12px; }
+      .q-link {
+        background: rgba(255,255,255,0.1);
+        padding: 12px 16px;
+        border-radius: 8px;
+        text-decoration: none;
+        color: white;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s;
+        &:hover { background: rgba(255,255,255,0.2); transform: translateX(4px); }
+      }
+    }
+
+    .empty-msg { text-align: center; color: #94a3b8; padding: 40px 0; font-style: italic; }
   `]
 })
-export class AdminDashboardComponent {}
+export class AdminDashboardComponent implements OnInit {
+  stats = signal<any>(null);
+  recentLessons = signal<any[]>([]);
+  isLoading = signal(true);
+
+  constructor(private courseService: CourseService) {}
+
+  ngOnInit() {
+    this.courseService.getAdminStats().subscribe({
+      next: (data) => {
+        this.stats.set(data.stats);
+        this.recentLessons.set(data.recentLessons);
+        this.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to load stats', err);
+        this.isLoading.set(false);
+      }
+    });
+  }
+}
+

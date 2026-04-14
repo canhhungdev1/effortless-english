@@ -59,4 +59,8 @@ export class CourseService {
   deleteLessonContent(id: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/lessons/content/${id}`);
   }
+
+  getAdminStats(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/admin/stats`);
+  }
 }
