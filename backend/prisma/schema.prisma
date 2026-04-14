@@ -63,3 +63,25 @@ model LessonContent {
 
   @@map("lesson_contents")
 }
+
+model UserVocabulary {
+  id              String   @id @default(uuid())
+  user_id         String   @map("user_id")
+  word            String
+  translation     String
+  phonetic        String?
+  audio           String?
+  example         String?
+  
+  // SRS Fields (SM-2 Algorithm)
+  interval        Int      @default(0)    // In days
+  repetitions     Int      @default(0)    
+  ease_factor     Float    @default(2.5)  
+  next_review     DateTime @default(now()) @map("next_review")
+  
+  created_at      DateTime @default(now()) @map("created_at")
+  updated_at      DateTime @updatedAt @map("updated_at")
+
+  @@unique([user_id, word])
+  @@map("user_vocabulary")
+}

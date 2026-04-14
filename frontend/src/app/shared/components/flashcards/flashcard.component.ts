@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { VocabularyWord } from '../../../core/models/course.model';
 
@@ -165,13 +165,17 @@ import { VocabularyWord } from '../../../core/models/course.model';
 })
 export class FlashcardComponent {
   @Input({ required: true }) data!: VocabularyWord;
+  @Output() flipped = new EventEmitter<boolean>();
+
   isFlipped = false;
 
   toggleFlip() {
     this.isFlipped = !this.isFlipped;
+    this.flipped.emit(this.isFlipped);
   }
 
   reset() {
     this.isFlipped = false;
+    this.flipped.emit(false);
   }
 }

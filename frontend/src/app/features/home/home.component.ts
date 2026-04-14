@@ -3,14 +3,29 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { CourseService } from '../../core/services/course.service';
 import { Course } from '../../core/models/course.model';
+import { FlashcardSessionComponent } from '../../shared/components/flashcards/flashcard-session.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FlashcardSessionComponent],
   template: `
     <div class="home">
-      <h1 class="page-title">Library</h1>
+      <div class="header-row">
+        <h1 class="page-title">Library</h1>
+        
+        <div *ngIf="dueCount() > 0" class="review-banner" (click)="openReview()">
+          <div class="banner-content">
+            <span class="banner-icon">🎴</span>
+            <div class="banner-text">
+              <span class="banner-label">Study Flashcards</span>
+              <span class="banner-sub">You have <strong>{{ dueCount() }}</strong> words due for review</span>
+            </div>
+          </div>
+          <button class="review-btn">Review Now</button>
+        </div>
+      </div>
+
       <h2 class="section-title">Main Courses</h2>
 
       <div class="course-grid">
@@ -31,17 +46,68 @@ import { Course } from '../../core/models/course.model';
         </a>
       </div>
     </div>
+
+    <!-- Flashcard Review Overlay -->
+    <app-flashcard-session 
+      *ngIf="showReview()" 
+      [words]="dueWords()" 
+      (close)="closeReview()" />
   `,
   styles: [`
     .home {
       padding-top: 8px;
     }
 
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+      gap: 24px;
+    }
+
     .page-title {
       font-size: 28px;
       font-weight: 800;
       color: var(--primary);
-      margin-bottom: 24px;
+      margin: 0;
+    }
+
+    .review-banner {
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+      color: white;
+      padding: 16px 24px;
+      border-radius: var(--radius-lg);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 32px;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: var(--shadow-md);
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+        filter: brightness(1.1);
+      }
+    }
+
+    .banner-content { display: flex; align-items: center; gap: 16px; }
+    .banner-icon { font-size: 32px; }
+    .banner-text { display: flex; flex-direction: column; }
+    .banner-label { font-weight: 800; font-size: 16px; color: white; }
+    .banner-sub { font-size: 13px; color: #cbd5e1; }
+    
+    .review-btn {
+      background: white;
+      color: #1e293b;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
     }
 
     .section-title {
@@ -186,6 +252,9 @@ import { Course } from '../../core/models/course.model';
 })
 export class HomeComponent implements OnInit {
   courses = signal<Course[]>([]);
+  dueWords = signal<any[]>([]);
+  dueCount = signal(0);
+  showReview = signal(false);
 
   constructor(private courseService: CourseService) {}
 
@@ -193,5 +262,25 @@ export class HomeComponent implements OnInit {
     this.courseService.getCourses().subscribe(courses => {
       this.courses.set(courses);
     });
+
+    this.loadDueFlashcards();
+  }
+
+  loadDueFlashcards() {
+    this.courseService.getDueFlashcards().subscribe(words => {
+      this.dueWords.set(words);
+      this.dueCount.set(words.length);
+    });
+  }
+
+  openReview() {
+    if (this.dueCount() > 0) {
+      this.showReview.set(true);
+    }
+  }
+
+  closeReview() {
+    this.showReview.set(false);
+    this.loadDueFlashcards(); // Refresh count
   }
 }

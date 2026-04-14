@@ -108,7 +108,10 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
                     <span class="kw-word">{{ kw.word }}</span>
                     <span class="kw-phonetic">{{ kw.phonetic }}</span>
                   </div>
-                  <button *ngIf="kw.audio" class="kw-audio-btn" (click)="playAudio(kw.audio); $event.stopPropagation()" title="Listen pronunciation">🔊</button>
+                  <div class="kw-actions">
+                    <button class="kw-audio-btn" (click)="saveToFlashcards(kw); $event.stopPropagation()" title="Add to Flashcards">❤️</button>
+                    <button *ngIf="kw.audio" class="kw-audio-btn" (click)="playAudio(kw.audio); $event.stopPropagation()" title="Listen pronunciation">🔊</button>
+                  </div>
                 </div>
                 <p class="kw-translation">{{ kw.translation }}</p>
                 <p class="kw-example"><strong>Example:</strong> {{ kw.example }}</p>
@@ -269,8 +272,9 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      margin-bottom: 6px;
+      margin-bottom: 12px;
     }
+    .kw-actions { display: flex; gap: 8px; }
     .kw-main-info {
       display: flex;
       align-items: baseline;
@@ -526,6 +530,13 @@ export class LessonDetailComponent implements OnInit {
   playAudio(url: string) {
     const audio = new Audio(url);
     audio.play();
+  }
+
+  saveToFlashcards(word: any) {
+    this.courseService.addToFlashcards(word).subscribe({
+      next: () => alert(`Saved "${word.word}" to your flashcards!`),
+      error: (err) => console.error('Failed to save to flashcards', err)
+    });
   }
 
   private loadVtt(vttUrl: string, type: 'miniStories' | 'commentaries' | 'pointOfViews' | 'vocabulary', index: number = 0) {

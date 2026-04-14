@@ -67,4 +67,17 @@ export class CourseService {
   updateLessonsOrder(lessons: { id: string; order: number }[]): Observable<any> {
     return this.http.post(`${this.apiUrl}/lessons/reorder`, lessons);
   }
+
+  // Flashcards
+  getDueFlashcards(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/flashcards/due`);
+  }
+
+  addToFlashcards(wordData: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/flashcards/add`, wordData);
+  }
+
+  reviewFlashcard(id: string, rating: number): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/flashcards/review/${id}`, { rating });
+  }
 }
