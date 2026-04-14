@@ -52,10 +52,10 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
           </div>
           <div class="article-body">
             <div class="article-english">
-              <div class="article-text" [innerHTML]="lesson()?.mainArticle?.englishText"></div>
+              <div class="article-text" [innerHTML]="cleanHtml(lesson()?.mainArticle?.englishText)"></div>
             </div>
             <div class="article-vietnamese">
-              <div class="article-text" [innerHTML]="lesson()?.mainArticle?.vietnameseText"></div>
+              <div class="article-text" [innerHTML]="cleanHtml(lesson()?.mainArticle?.vietnameseText)"></div>
             </div>
           </div>
         </div>
@@ -90,7 +90,7 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
                   class="vocab-paragraph"
                   [class.highlighted]="i === 0"
                 >
-                  <p>{{ p }}</p>
+                  <p [innerHTML]="cleanHtml(p)"></p>
                 </div>
               </ng-template>
             </div>
@@ -197,11 +197,21 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
     }
     .article-body { 
       display: grid; 
-      grid-template-columns: 1fr 1fr; 
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); 
       gap: 40px; 
     }
-    .article-english .article-text { font-size: 16px; line-height: 1.8; color: var(--text-primary); overflow-wrap: break-word; word-break: break-word; }
-    .article-vietnamese .article-text { font-size: 15px; line-height: 1.8; color: var(--text-secondary); font-style: italic; overflow-wrap: break-word; word-break: break-word; }
+    .article-english .article-text { font-size: 16px; line-height: 1.8; color: var(--text-primary); }
+    .article-vietnamese .article-text { font-size: 15px; line-height: 1.8; color: var(--text-secondary); font-style: italic; }
+    
+    ::ng-deep .article-text p, 
+    ::ng-deep .article-text span, 
+    ::ng-deep .vocab-paragraphs p, 
+    ::ng-deep .story-card p {
+      word-break: normal !important;
+      word-wrap: normal !important;
+      overflow-wrap: normal !important;
+      white-space: normal !important;
+    }
     .vocabulary-layout { 
       display: flex;
       flex-direction: column;
@@ -217,7 +227,7 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
       background: var(--bg-white); 
       border: 1px solid var(--border-light); 
       border-radius: var(--radius-lg);
-      position: relative; /* Add this to fix offsetTop calculation */
+      position: relative;
     }
     .vocab-paragraph { padding: 14px 20px; border-radius: var(--radius-sm); &.highlighted { border-left: 3px solid var(--highlight-border); background: var(--highlight-bg); p { color: var(--highlight-text); font-weight: 600; } } &.clickable-line { cursor: pointer; } }
     .keywords-panel { 
@@ -323,8 +333,9 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
       box-shadow: var(--shadow-sm);
       position: relative;
     }
-    .story-line { padding: 14px 20px; overflow-wrap: break-word; word-break: break-word; &.clickable-line { cursor: pointer; } &.highlighted { border-left: 3px solid var(--highlight-border); background: var(--highlight-bg); p { color: var(--highlight-text); font-weight: 600; } } }
+    .story-line { padding: 14px 20px; &.clickable-line { cursor: pointer; } &.highlighted { border-left: 3px solid var(--highlight-border); background: var(--highlight-bg); p { color: var(--highlight-text); font-weight: 600; } } }
     .empty-state { text-align: center; color: var(--text-muted); padding: 40px; font-style: italic; }
+    
     @media (max-width: 900px) {
       .article-body { 
         grid-template-columns: 1fr; 
@@ -382,6 +393,12 @@ export class LessonDetailComponent implements OnInit {
 
   courseSlug = '';
   lessonSlug = '';
+
+  cleanHtml(html: string | undefined | null): string {
+    if (!html) return '';
+    // Replace non-breaking spaces with normal spaces to prevent the browser from treating whole sentences as single long words, which causes aggressive mid-word line breaks.
+    return html.replace(/(&nbsp;|\u00A0)/g, ' ');
+  }
 
   constructor(
     private route: ActivatedRoute,
