@@ -25,6 +25,7 @@ export interface Lesson {
 
 export interface MainArticle {
   audioUrl?: string;
+  vttUrl?: string;
   englishText: string;
   vietnameseText: string;
 }

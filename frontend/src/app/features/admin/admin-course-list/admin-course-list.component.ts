@@ -246,8 +246,7 @@ export class AdminCourseListComponent implements OnInit {
   }
 
   viewLessons(course: Course) {
-    // Navigate to lessons management for this course (to be implemented)
-    console.log('View lessons for', course.slug);
+    this.router.navigate(['/admin/courses', course.id, 'lessons']);
   }
 
   editCourse(course: Course) {

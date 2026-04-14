@@ -39,4 +39,24 @@ export class CourseService {
   updateCourse(id: string, course: any): Observable<Course> {
     return this.http.patch<Course>(`${this.apiUrl}/courses/${id}`, course);
   }
+
+  createLesson(courseId: string, lesson: any): Observable<Lesson> {
+    return this.http.post<Lesson>(`${this.apiUrl}/lessons/${courseId}`, lesson);
+  }
+
+  updateLesson(id: string, lesson: any): Observable<Lesson> {
+    return this.http.patch<Lesson>(`${this.apiUrl}/lessons/${id}`, lesson);
+  }
+
+  deleteLesson(id: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/lessons/${id}`);
+  }
+
+  upsertLessonContent(lessonId: string, type: string, data: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/lessons/${lessonId}/content/${type}`, data);
+  }
+
+  deleteLessonContent(id: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/lessons/content/${id}`);
+  }
 }

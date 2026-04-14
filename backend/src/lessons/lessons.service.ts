@@ -105,4 +105,92 @@ export class LessonsService {
 
     return result;
   }
+
+  async create(courseId: string, data: any) {
+    return this.prisma.lesson.create({
+      data: {
+        course_id: courseId,
+        slug: data.slug,
+        title: data.title,
+        order: data.order || 0,
+        progress: 0,
+      }
+    });
+  }
+
+  async update(id: string, data: any) {
+    return this.prisma.lesson.update({
+      where: { id },
+      data: {
+        slug: data.slug,
+        title: data.title,
+        order: data.order,
+      }
+    });
+  }
+
+  async remove(id: string) {
+    return this.prisma.lesson.delete({
+      where: { id }
+    });
+  }
+
+  async upsertContent(lessonId: string, type: string, data: any) {
+    // For single-instance types (ARTICLE, VOCABULARY), we use the old logic
+    const singleInstanceTypes = ['ARTICLE', 'VOCABULARY'];
+    
+    if (singleInstanceTypes.includes(type)) {
+      const existing = await this.prisma.lessonContent.findFirst({
+        where: { lesson_id: lessonId, type }
+      });
+
+      if (existing) {
+        return this.prisma.lessonContent.update({
+          where: { id: existing.id },
+          data: {
+            title: data.title,
+            audio_url: data.audioUrl,
+            vtt_url: data.vttUrl,
+            content_en: data.contentEn,
+            content_vi: data.contentVi,
+            data: data.extraData || {},
+          }
+        });
+      }
+    }
+
+    // For multi-instance types or new single-instance
+    if (data.id) {
+      return this.prisma.lessonContent.update({
+        where: { id: data.id },
+        data: {
+          title: data.title,
+          audio_url: data.audioUrl,
+          vtt_url: data.vttUrl,
+          content_en: data.contentEn,
+          content_vi: data.contentVi,
+          data: data.extraData || {},
+        }
+      });
+    }
+
+    return this.prisma.lessonContent.create({
+      data: {
+        lesson_id: lessonId,
+        type,
+        title: data.title,
+        audio_url: data.audioUrl,
+        vtt_url: data.vttUrl,
+        content_en: data.contentEn,
+        content_vi: data.contentVi,
+        data: data.extraData || {},
+      }
+    });
+  }
+
+  async removeContent(id: string) {
+    return this.prisma.lessonContent.delete({
+      where: { id }
+    });
+  }
 }
