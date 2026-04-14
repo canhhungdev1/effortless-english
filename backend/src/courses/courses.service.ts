@@ -57,4 +57,39 @@ export class CoursesService {
       lessonCount: course._count.lessons
     };
   }
+
+  async create(data: any) {
+    return this.prisma.course.create({
+      data: {
+        slug: data.slug,
+        title: data.title,
+        description: data.description,
+        level: data.level,
+        cover_image: data.coverImage,
+        is_vip: data.isVip,
+        stage: data.stage || 1,
+      }
+    });
+  }
+
+  async update(id: string, data: any) {
+    return this.prisma.course.update({
+      where: { id },
+      data: {
+        slug: data.slug,
+        title: data.title,
+        description: data.description,
+        level: data.level,
+        cover_image: data.coverImage,
+        is_vip: data.isVip,
+        stage: data.stage,
+      }
+    });
+  }
+
+  async remove(id: string) {
+    return this.prisma.course.delete({
+      where: { id }
+    });
+  }
 }

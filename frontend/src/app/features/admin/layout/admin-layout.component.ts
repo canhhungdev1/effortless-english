@@ -1,0 +1,263 @@
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterLink, RouterOutlet, RouterLinkActive } from '@angular/router';
+
+@Component({
+  selector: 'app-admin-layout',
+  standalone: true,
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  template: `
+    <div class="admin-container">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <div class="logo">
+            <span class="logo-icon">⚡</span>
+            <span class="logo-text">Admin Panel</span>
+          </div>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a routerLink="/admin/dashboard" routerLinkActive="active" class="nav-item">
+            <span class="icon">📊</span>
+            <span class="label">Dashboard</span>
+          </a>
+          <a routerLink="/admin/courses" routerLinkActive="active" class="nav-item">
+            <span class="icon">📚</span>
+            <span class="label">Manage Courses</span>
+          </a>
+          <div class="nav-divider"></div>
+          <a routerLink="/" class="nav-item back-home">
+            <span class="icon">🏠</span>
+            <span class="label">Back to Site</span>
+          </a>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="user-info">
+            <div class="avatar">AD</div>
+            <div class="details">
+              <span class="name">Administrator</span>
+              <span class="role">Project Owner</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <header class="top-bar">
+          <h2 class="page-title">Admin Dashboard</h2>
+          <div class="top-actions">
+            <button class="action-btn notification">
+              <span class="icon">🔔</span>
+            </button>
+            <button class="action-btn logout">
+              <span class="icon">🔒</span>
+              Logout
+            </button>
+          </div>
+        </header>
+
+        <div class="content-wrapper">
+          <router-outlet></router-outlet>
+        </div>
+      </main>
+    </div>
+  `,
+  styles: [`
+    .admin-container {
+      display: flex;
+      min-height: 100vh;
+      background: #f8fafc;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      background: #1e293b;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+
+    .sidebar-header {
+      padding: 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      font-size: 24px;
+      background: var(--primary);
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+    }
+
+    .logo-text {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 24px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      color: #94a3b8;
+      text-decoration: none;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      font-weight: 500;
+    }
+
+    .nav-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: white;
+    }
+
+    .nav-item.active {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .nav-divider {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.1);
+      margin: 16px 0;
+    }
+
+    .back-home {
+      margin-top: auto;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .sidebar-footer {
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      background: #475569;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .details {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .name {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .role {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    .top-bar {
+      height: 70px;
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .page-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .action-btn {
+      height: 40px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 16px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background: white;
+      color: #475569;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .action-btn:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+
+    .notification {
+      padding: 0;
+      width: 40px;
+      justify-content: center;
+    }
+
+    .content-wrapper {
+      padding: 32px;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+    }
+  `]
+})
+export class AdminLayoutComponent {}

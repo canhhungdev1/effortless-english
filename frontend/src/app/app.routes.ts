@@ -22,5 +22,37 @@ export const routes: Routes = [
           import('./features/lesson-detail/lesson-detail.component').then(m => m.LessonDetailComponent)
       }
     ]
+  },
+  {
+    path: 'admin',
+    loadComponent: () => 
+      import('./features/admin/layout/admin-layout.component').then(m => m.AdminLayoutComponent),
+    children: [
+      {
+        path: '',
+        redirectTo: 'dashboard',
+        pathMatch: 'full'
+      },
+      {
+        path: 'dashboard',
+        loadComponent: () => 
+          import('./features/admin/dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent)
+      },
+      {
+        path: 'courses',
+        loadComponent: () => 
+          import('./features/admin/admin-course-list/admin-course-list.component').then(m => m.AdminCourseListComponent)
+      },
+      {
+        path: 'courses/new',
+        loadComponent: () => 
+          import('./features/admin/admin-course-edit/admin-course-edit.component').then(m => m.AdminCourseEditComponent)
+      },
+      {
+        path: 'courses/edit/:id',
+        loadComponent: () => 
+          import('./features/admin/admin-course-edit/admin-course-edit.component').then(m => m.AdminCourseEditComponent)
+      }
+    ]
   }
 ];
