@@ -9,13 +9,16 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [RouterOutlet, SidebarComponent, HeaderComponent, CommonModule],
   template: `
-    <div class="layout">
+    <div class="layout" [class.desktop-collapsed]="isDesktopCollapsed">
       <div class="sidebar-overlay"
-           [class.visible]="sidebarOpen"
-           (click)="sidebarOpen = false"></div>
-      <app-sidebar [isOpen]="sidebarOpen" (closeSidebar)="sidebarOpen = false" />
+           [class.visible]="isMobileOpen"
+           (click)="closeMobileSidebar()"></div>
+      <app-sidebar 
+           [isOpen]="isMobileOpen" 
+           [isDesktopCollapsed]="isDesktopCollapsed"
+           (closeSidebar)="closeMobileSidebar()" />
       <div class="layout-main">
-        <app-header (toggleSidebar)="sidebarOpen = !sidebarOpen" />
+        <app-header (toggleSidebar)="toggleSidebar()" />
         <main class="layout-content">
           <router-outlet />
         </main>
@@ -38,6 +41,11 @@ import { CommonModule } from '@angular/common';
       flex-direction: column;
       overflow-x: hidden;
       min-width: 0;
+      transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .layout.desktop-collapsed .layout-main {
+      margin-left: 0;
     }
 
     .layout-content {
@@ -84,5 +92,18 @@ import { CommonModule } from '@angular/common';
   `]
 })
 export class MainLayoutComponent {
-  sidebarOpen = false;
+  isMobileOpen = false;
+  isDesktopCollapsed = false;
+
+  toggleSidebar() {
+    if (typeof window !== 'undefined' && window.innerWidth <= 1024) {
+      this.isMobileOpen = !this.isMobileOpen;
+    } else {
+      this.isDesktopCollapsed = !this.isDesktopCollapsed;
+    }
+  }
+
+  closeMobileSidebar() {
+    this.isMobileOpen = false;
+  }
 }

@@ -6,7 +6,9 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <aside class="sidebar" [class.open]="isOpen">
+    <aside class="sidebar" 
+           [class.open]="isOpen" 
+           [class.desktop-collapsed]="isDesktopCollapsed">
       <div class="sidebar-top">
         <div class="sidebar-logo">
           <div class="logo-icon">
@@ -79,6 +81,10 @@ import { CommonModule } from '@angular/common';
       z-index: 100;
       overflow-y: auto;
       transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .sidebar.desktop-collapsed {
+      transform: translateX(-100%);
     }
 
     .sidebar-top {
@@ -228,6 +234,7 @@ import { CommonModule } from '@angular/common';
 })
 export class SidebarComponent {
   @Input() isOpen = false;
+  @Input() isDesktopCollapsed = false;
   @Output() closeSidebar = new EventEmitter<void>();
   coursesExpanded = false;
 }

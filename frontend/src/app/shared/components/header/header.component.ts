@@ -68,7 +68,7 @@ import { CommonModule } from '@angular/common';
     }
 
     .hamburger-btn {
-      display: none;
+      display: flex;
       width: 40px;
       height: 40px;
       border-radius: var(--radius-md);
@@ -77,6 +77,9 @@ import { CommonModule } from '@angular/common';
       color: var(--text-primary);
       flex-shrink: 0;
       transition: var(--transition);
+      cursor: pointer;
+      background: transparent;
+      border: none;
 
       &:hover {
         background: var(--bg-gray);
@@ -173,10 +176,6 @@ import { CommonModule } from '@angular/common';
     }
 
     @media (max-width: 1024px) {
-      .hamburger-btn {
-        display: flex;
-      }
-
       .header {
         padding: 0 20px;
       }

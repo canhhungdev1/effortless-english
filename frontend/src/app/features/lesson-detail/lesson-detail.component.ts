@@ -90,7 +90,7 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
                   class="vocab-paragraph"
                   [class.highlighted]="i === 0"
                 >
-                  <p [innerHTML]="cleanHtml(p)"></p>
+                  <div [innerHTML]="cleanHtml(p)"></div>
                 </div>
               </ng-template>
             </div>
@@ -200,8 +200,8 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); 
       gap: 40px; 
     }
-    .article-english .article-text { font-size: 16px; line-height: 1.8; color: var(--text-primary); }
-    .article-vietnamese .article-text { font-size: 15px; line-height: 1.8; color: var(--text-secondary); font-style: italic; }
+    .article-english .article-text { font-size: 16px; line-height: 1.8; color: var(--text-primary); text-align: justify; }
+    .article-vietnamese .article-text { font-size: 15px; line-height: 1.8; color: var(--text-secondary); font-style: italic; text-align: justify; }
     
     ::ng-deep .article-text p, 
     ::ng-deep .article-text span, 
@@ -211,6 +211,13 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
       word-wrap: normal !important;
       overflow-wrap: normal !important;
       white-space: normal !important;
+      margin-top: 0;
+      margin-bottom: 1.25rem;
+    }
+    ::ng-deep .article-text p:last-child, 
+    ::ng-deep .vocab-paragraph p:last-child, 
+    ::ng-deep .story-card p:last-child {
+      margin-bottom: 0;
     }
     .vocabulary-layout { 
       display: flex;
@@ -229,7 +236,7 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
       border-radius: var(--radius-lg);
       position: relative;
     }
-    .vocab-paragraph { padding: 14px 20px; border-radius: var(--radius-sm); &.highlighted { border-left: 3px solid var(--highlight-border); background: var(--highlight-bg); p { color: var(--highlight-text); font-weight: 600; } } &.clickable-line { cursor: pointer; } }
+    .vocab-paragraph { padding: 14px 20px; border-radius: var(--radius-sm); text-align: justify; &.highlighted { border-left: 3px solid var(--highlight-border); background: var(--highlight-bg); p { color: var(--highlight-text); font-weight: 600; } } &.clickable-line { cursor: pointer; } }
     .keywords-panel { 
       background: var(--bg-white); 
       border: 1px solid var(--border-light); 
@@ -333,7 +340,7 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
       box-shadow: var(--shadow-sm);
       position: relative;
     }
-    .story-line { padding: 14px 20px; &.clickable-line { cursor: pointer; } &.highlighted { border-left: 3px solid var(--highlight-border); background: var(--highlight-bg); p { color: var(--highlight-text); font-weight: 600; } } }
+    .story-line { padding: 14px 20px; text-align: justify; &.clickable-line { cursor: pointer; } &.highlighted { border-left: 3px solid var(--highlight-border); background: var(--highlight-bg); p { color: var(--highlight-text); font-weight: 600; } } }
     .empty-state { text-align: center; color: var(--text-muted); padding: 40px; font-style: italic; }
     
     @media (max-width: 900px) {
