@@ -184,7 +184,7 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
       display: flex; 
       align-items: center; 
       gap: 8px; 
-      padding: 10px 18px; 
+      padding: 25px 18px; 
       background: var(--bg-gray); 
       border: 1px solid var(--border-color); 
       color: var(--text-primary); 
@@ -411,7 +411,7 @@ export class LessonDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private courseService: CourseService,
     private http: HttpClient
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.courseSlug = this.route.snapshot.paramMap.get('courseSlug')!;
@@ -445,14 +445,14 @@ export class LessonDetailComponent implements OnInit {
   getActiveStory(tab: string): StoryContent | undefined {
     const lesson = this.lesson();
     if (!lesson) return undefined;
-    
+
     const [category, indexStr] = tab.split('_');
     const index = parseInt(indexStr, 10);
-    
+
     if (category === 'miniStory') return lesson.miniStories?.[index];
     if (category === 'commentary') return lesson.commentaries?.[index];
     if (category === 'pointOfView') return lesson.pointOfViews?.[index];
-    
+
     return undefined;
   }
 
@@ -476,15 +476,15 @@ export class LessonDetailComponent implements OnInit {
     this.availableTabs = [];
     if (lesson.mainArticle) this.availableTabs.push({ key: 'mainArticle', label: 'Main Article' });
     if (lesson.vocabulary) this.availableTabs.push({ key: 'vocabulary', label: 'Vocabulary' });
-    
+
     lesson.miniStories?.forEach((s, i) => {
       this.availableTabs.push({ key: `miniStory_${i}`, label: s.title || `Mini-Story ${i + 1}` });
     });
-    
+
     lesson.commentaries?.forEach((s, i) => {
       this.availableTabs.push({ key: `commentary_${i}`, label: s.title || `Commentary ${i + 1}` });
     });
-    
+
     lesson.pointOfViews?.forEach((s, i) => {
       this.availableTabs.push({ key: `pointOfView_${i}`, label: s.title || `Point of View ${i + 1}` });
     });
@@ -512,8 +512,8 @@ export class LessonDetailComponent implements OnInit {
   private syncLines(lines: StoryLine[], currentTime: number, selector: string) {
     let newlyHighlighted = false;
     lines.forEach(line => {
-      const isNowHighlighted = !!(line.start !== undefined && line.end !== undefined 
-                           && currentTime >= line.start && currentTime <= line.end);
+      const isNowHighlighted = !!(line.start !== undefined && line.end !== undefined
+        && currentTime >= line.start && currentTime <= line.end);
       if (isNowHighlighted && !line.isHighlighted) newlyHighlighted = true;
       line.isHighlighted = isNowHighlighted;
     });
@@ -525,9 +525,9 @@ export class LessonDetailComponent implements OnInit {
           const container = activeEl.closest('.story-card, .vocab-paragraphs') as HTMLElement;
           if (container) {
             const scrollPos = activeEl.offsetTop - (container.offsetHeight / 2) + (activeEl.offsetHeight / 2);
-            container.scrollTo({ 
-              top: scrollPos, 
-              behavior: 'smooth' 
+            container.scrollTo({
+              top: scrollPos,
+              behavior: 'smooth'
             });
           }
         }
@@ -557,7 +557,7 @@ export class LessonDetailComponent implements OnInit {
         const parsed = this.parseVtt(vttData);
         const currentLesson = this.lesson();
         if (!currentLesson) return;
-        
+
         const lines = parsed.map(p => ({ text: p.text, start: p.start, end: p.end, isHighlighted: false }));
 
         if (type === 'vocabulary' && currentLesson.vocabulary) {
@@ -566,7 +566,7 @@ export class LessonDetailComponent implements OnInit {
           const stories = currentLesson[type as StoryCategory];
           if (stories && stories[index]) stories[index].lines = lines;
         }
-        
+
         // Trigger signal update to notify components of deep change
         this.lesson.set({ ...currentLesson });
       },
@@ -574,7 +574,7 @@ export class LessonDetailComponent implements OnInit {
     });
   }
 
-  private parseVtt(vttContent: string): {start: number, end: number, text: string}[] {
+  private parseVtt(vttContent: string): { start: number, end: number, text: string }[] {
     const lines = vttContent.split('\n').map(l => l.trimStart());
     const result = [];
     const timeReg = /(\d{2}:\d{2}:\d{2}\.\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}\.\d{3})/;
