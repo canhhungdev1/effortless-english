@@ -68,8 +68,9 @@ import { CommonModule } from '@angular/common';
 
         <!-- Rewind 10s -->
         <button class="control-btn" (click)="rewind(10)">
-          <svg fill="currentColor" width="24" height="24" viewBox="0 0 24 24">
-            <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8zm-1.1 11H9.5v-3.7l-1.3.4v-.8l1.7-.6h1v4.7zm2.3 0h-1v-4.7h1v4.7zm-1.8-3.6c-.2 0-.3.1-.3.3v1.8c0 .2.1.3.3.3h1c.2 0 .3-.1.3-.3v-1.8c0-.2-.1-.3-.3-.3h-1z"/>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6" />
+            <text x="12" y="15" font-family="Arial, sans-serif" font-size="6.5" font-weight="bold" text-anchor="middle" fill="currentColor" stroke-width="0">10</text>
           </svg>
         </button>
 
@@ -84,10 +85,11 @@ import { CommonModule } from '@angular/common';
           </svg>
         </button>
 
+        <!-- Forward 10s -->
         <button class="control-btn" (click)="forward(10)">
-          <!-- Forward 10s -->
-          <svg fill="currentColor" width="24" height="24" viewBox="0 0 24 24">
-            <path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 c4.42 0 8-3.58 8-8h-2c0 3.31-2.69 6-6 6s-6-2.69-6-6 2.69-6 6-6v4zm-.3 11h-1.5v-3.7l-1.3.4v-.8l1.7-.6h1.1v4.7zm2.3 0h-1v-4.7h1v4.7zm-1.8-3.6c-.2 0-.4.1-.4.3v1.8c0 .2.2.3.4.3h1.1c.2 0 .4-.1.4-.3v-1.8c0-.2-.2-.3-.4-.3h-1.1z"/>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6" />
+            <text x="12" y="15" font-family="Arial, sans-serif" font-size="6.5" font-weight="bold" text-anchor="middle" fill="currentColor" stroke-width="0">10</text>
           </svg>
         </button>
 
@@ -390,7 +392,7 @@ export class AudioPlayerComponent implements OnChanges, OnDestroy {
   currentTime = '0:00';
   duration = '0:00';
   progress = 0;
-  
+
   // Playback Speed
   currentSpeed = 1.0;
   showSpeedMenu = false;
@@ -488,7 +490,7 @@ export class AudioPlayerComponent implements OnChanges, OnDestroy {
     const rect = target.getBoundingClientRect();
     const percent = (event.clientX - rect.left) / rect.width;
     const audio = this.audioRef.nativeElement;
-    
+
     if (audio.duration) {
       audio.currentTime = percent * audio.duration;
       this.progress = percent * 100;
