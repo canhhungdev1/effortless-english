@@ -85,4 +85,13 @@ export class CourseService {
   reviewFlashcard(id: string, rating: number): Observable<any> {
     return this.http.patch(`${this.apiUrl}/flashcards/review/${id}`, { rating });
   }
+
+  getMediaStatus(): Observable<any> {
+    return this.http.get(`${this.apiUrl.replace('/api', '')}/media/maintenance/status`);
+  }
+
+  cleanupMedia(): Observable<any> {
+    return this.http.post(`${this.apiUrl.replace('/api', '')}/media/maintenance/cleanup`, {});
+  }
 }
+

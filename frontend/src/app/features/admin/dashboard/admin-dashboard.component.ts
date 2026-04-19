@@ -62,8 +62,31 @@ import { RouterLink } from '@angular/router';
           <a routerLink="/admin/courses/new" class="q-link">Add New Course</a>
           <a routerLink="/admin/courses" class="q-link">Browse Lessons</a>
         </div>
+
+        <div class="maintenance-section" *ngIf="mediaStats()">
+           <div class="m-divider"></div>
+           <h4>Media Storage</h4>
+           <div class="m-stats">
+              <div class="m-stat">
+                 <span>Total Usage:</span>
+                 <strong>{{ mediaStats().totalSize }}</strong>
+              </div>
+              <div class="m-stat highlight" *ngIf="mediaStats().unusedFilesCount > 0">
+                 <span>Unused Files:</span>
+                 <strong>{{ mediaStats().unusedFilesCount }} ({{ mediaStats().unusedSize }})</strong>
+              </div>
+           </div>
+           <button 
+             class="cleanup-btn" 
+             [disabled]="isCleaning() || mediaStats().unusedFilesCount === 0"
+             (click)="cleanupMedia()"
+           >
+             {{ isCleaning() ? 'Cleaning...' : 'Cleanup Storage' }}
+           </button>
+        </div>
       </div>
     </div>
+
   `,
   styles: [`
     .dashboard-grid {
@@ -158,17 +181,42 @@ import { RouterLink } from '@angular/router';
       }
     }
 
+    .maintenance-section {
+      margin-top: 24px;
+      h4 { font-size: 14px; margin-bottom: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+      .m-divider { height: 1px; background: rgba(255,255,255,0.1); margin-bottom: 20px; }
+      .m-stats { margin-bottom: 20px; }
+      .m-stat { 
+        display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; 
+        &.highlight { color: #fbbf24; }
+      }
+      .cleanup-btn {
+        width: 100%; padding: 10px; border-radius: 8px; border: none; background: #ef4444; color: white;
+        font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s;
+        &:hover:not(:disabled) { background: #dc2626; }
+        &:disabled { opacity: 0.5; cursor: not-allowed; }
+      }
+    }
+
     .empty-msg { text-align: center; color: #94a3b8; padding: 40px 0; font-style: italic; }
+
   `]
 })
 export class AdminDashboardComponent implements OnInit {
   stats = signal<any>(null);
   recentLessons = signal<any[]>([]);
+  mediaStats = signal<any>(null);
   isLoading = signal(true);
+  isCleaning = signal(false);
 
   constructor(private courseService: CourseService) {}
 
   ngOnInit() {
+    this.loadStats();
+    this.loadMediaStats();
+  }
+
+  loadStats() {
     this.courseService.getAdminStats().subscribe({
       next: (data) => {
         this.stats.set(data.stats);
@@ -181,5 +229,33 @@ export class AdminDashboardComponent implements OnInit {
       }
     });
   }
+
+  loadMediaStats() {
+    this.courseService.getMediaStatus().subscribe({
+      next: (data) => this.mediaStats.set(data),
+      error: (err) => console.error('Failed to load media stats', err)
+    });
+  }
+
+  cleanupMedia() {
+    if (!confirm('This will permanently delete all files not referenced in the database. Are you sure?')) {
+      return;
+    }
+
+    this.isCleaning.set(true);
+    this.courseService.cleanupMedia().subscribe({
+      next: (res) => {
+        alert(res.message);
+        this.loadMediaStats();
+        this.isCleaning.set(false);
+      },
+      error: (err) => {
+        alert('Cleanup failed');
+        console.error(err);
+        this.isCleaning.set(false);
+      }
+    });
+  }
 }
+
 
