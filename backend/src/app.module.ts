@@ -10,6 +10,8 @@ import { UploadModule } from './upload/upload.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { FlashcardsModule } from './flashcards/flashcards.module';
+import { MediaModule } from './media/media.module';
+
 
 @Module({
   imports: [
@@ -19,9 +21,12 @@ import { FlashcardsModule } from './flashcards/flashcards.module';
     AdminModule, 
     UploadModule,
     FlashcardsModule,
+    MediaModule,
+
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', 'public'),
       serveRoot: '/',
+      exclude: ['/media/(.*)'],
     }),
   ],
   controllers: [AppController],

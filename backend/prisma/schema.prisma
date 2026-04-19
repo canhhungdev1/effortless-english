@@ -21,8 +21,10 @@ model Course {
   cover_image String?  @map("cover_image")
   is_vip      Boolean  @default(false) @map("is_vip")
   stage       Int      @default(1)
+  order       Int      @default(0)
   created_at  DateTime @default(now()) @map("created_at")
   updated_at  DateTime @updatedAt @map("updated_at")
+
 
   lessons Lesson[]
 

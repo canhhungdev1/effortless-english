@@ -40,6 +40,11 @@ export class CourseService {
     return this.http.patch<Course>(`${this.apiUrl}/courses/${id}`, course);
   }
 
+  updateCoursesOrder(courses: { id: string; order: number }[]): Observable<any> {
+    return this.http.post(`${this.apiUrl}/courses/reorder`, courses);
+  }
+
+
   createLesson(courseId: string, lesson: any): Observable<Lesson> {
     return this.http.post<Lesson>(`${this.apiUrl}/lessons/${courseId}`, lesson);
   }

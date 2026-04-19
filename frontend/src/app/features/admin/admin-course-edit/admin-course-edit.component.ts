@@ -71,7 +71,7 @@ import { FileUploadComponent } from '../../../shared/components/file-upload/file
             <label for="coverImage">Cover Image URL</label>
             <div class="input-with-upload">
               <input type="text" id="coverImage" formControlName="coverImage" placeholder="assets/images/...">
-              <app-file-upload accept="image/*" label="Image" (uploaded)="courseForm.get('coverImage')?.setValue($event)"></app-file-upload>
+              <app-file-upload accept="image/*" label="Image" [courseId]="courseId || ''" (uploaded)="courseForm.get('coverImage')?.setValue($event)"></app-file-upload>
             </div>
           </div>
 

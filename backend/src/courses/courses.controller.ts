@@ -20,6 +20,12 @@ export class CoursesController {
     return this.coursesService.create(data);
   }
 
+  @Post('reorder')
+  reorder(@Body() items: { id: string; order: number }[]) {
+    return this.coursesService.reorder(items);
+  }
+
+
   @Patch(':id')
   update(@Param('id') id: string, @Body() data: any) {
     return this.coursesService.update(id, data);

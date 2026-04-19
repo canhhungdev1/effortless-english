@@ -38,14 +38,18 @@ import { FileUploadComponent } from '../../../shared/components/file-upload/file
               <label>Audio URL</label>
               <div class="input-with-upload">
                 <input type="text" formControlName="audioUrl" placeholder="/media/...">
-                <app-file-upload accept="audio/*" label="Audio" (uploaded)="articleForm.get('audioUrl')?.setValue($event)"></app-file-upload>
+                <app-file-upload accept="audio/*" label="Audio" [courseId]="courseId" [lessonId]="lessonId" (uploaded)="articleForm.get('audioUrl')?.setValue($event)"></app-file-upload>
+
+
               </div>
             </div>
             <div class="col">
               <label>VTT URL (Optional)</label>
               <div class="input-with-upload">
                 <input type="text" formControlName="vttUrl" placeholder="/media/...">
-                <app-file-upload accept=".vtt" label="VTT" (uploaded)="articleForm.get('vttUrl')?.setValue($event)"></app-file-upload>
+                <app-file-upload accept=".vtt" label="VTT" [courseId]="courseId" [lessonId]="lessonId" (uploaded)="articleForm.get('vttUrl')?.setValue($event)"></app-file-upload>
+
+
               </div>
             </div>
           </div>

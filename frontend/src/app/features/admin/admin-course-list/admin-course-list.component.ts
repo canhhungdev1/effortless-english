@@ -3,19 +3,26 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { CourseService } from '../../../core/services/course.service';
 import { Course } from '../../../core/models/course.model';
+import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+
 
 @Component({
   selector: 'app-admin-course-list',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, DragDropModule],
+
   template: `
     <div class="header-actions">
       <h3 class="section-title">Course Management</h3>
-      <button class="add-btn" routerLink="/admin/courses/new">
-        <span class="icon">＋</span>
-        Create New Course
-      </button>
+      <div class="header-right">
+        <span class="saving-badge" *ngIf="isSavingOrder()">Saving order...</span>
+        <button class="add-btn" routerLink="/admin/courses/new">
+          <span class="icon">＋</span>
+          Create New Course
+        </button>
+      </div>
     </div>
+
 
     <div class="table-container">
       <div *ngIf="isLoading()" class="loading-state">
@@ -34,10 +41,11 @@ import { Course } from '../../../core/models/course.model';
             <th>Actions</th>
           </tr>
         </thead>
-        <tbody>
-          <tr *ngFor="let course of courses()">
+        <tbody cdkDropList (cdkDropListDropped)="onDrop($event)">
+          <tr *ngFor="let course of courses()" cdkDrag class="drag-row">
             <td>
               <div class="course-cell">
+                <div class="drag-handle" cdkDragHandle>⋮⋮</div>
                 <img [src]="course.coverImage" [alt]="course.title" class="table-thumb">
                 <span class="course-name">{{ course.title }}</span>
               </div>
@@ -53,11 +61,17 @@ import { Course } from '../../../core/models/course.model';
                 <button (click)="deleteCourse(course)" class="action-icon delete" title="Delete">🗑️</button>
               </div>
             </td>
+            
+            <!-- Drag Preview -->
+            <div *cdkDragPreview class="drag-preview">
+               {{ course.title }}
+            </div>
           </tr>
           <tr *ngIf="courses().length === 0">
             <td colspan="6" class="empty-state">No courses found. Add your first course!</td>
           </tr>
         </tbody>
+
       </table>
     </div>
   `,
@@ -70,6 +84,8 @@ import { Course } from '../../../core/models/course.model';
     }
 
     .section-title { font-size: 20px; font-weight: 700; color: #1e293b; }
+    .header-right { display: flex; align-items: center; gap: 16px; }
+
 
     .add-btn {
       background: var(--primary);
@@ -196,7 +212,49 @@ import { Course } from '../../../core/models/course.model';
       to { transform: rotate(360deg); }
     }
 
+    .drag-row {
+      background: white;
+      &.cdk-drag-preview {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        display: table;
+        background: white;
+      }
+      &.cdk-drag-placeholder { opacity: 0.3; }
+    }
+
+    .drag-handle {
+      cursor: grab;
+      color: #94a3b8;
+      padding: 0 4px;
+      font-size: 18px;
+      user-select: none;
+      &:active { cursor: grabbing; }
+    }
+
+    .drag-preview {
+      padding: 12px 24px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-weight: 600;
+      color: var(--primary);
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+    }
+
+    .saving-badge {
+      background: #fef9c3;
+      color: #854d0e;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+
     .empty-state {
+
+
       padding: 40px !important;
       text-align: center;
       color: #94a3b8;
@@ -207,6 +265,8 @@ import { Course } from '../../../core/models/course.model';
 export class AdminCourseListComponent implements OnInit {
   courses = signal<Course[]>([]);
   isLoading = signal(false);
+  isSavingOrder = signal(false);
+
 
   constructor(
     private courseService: CourseService,
@@ -252,4 +312,32 @@ export class AdminCourseListComponent implements OnInit {
   editCourse(course: Course) {
     this.router.navigate(['/admin/courses/edit', course.id]);
   }
+
+  onDrop(event: CdkDragDrop<Course[]>) {
+    const coursesArr = [...this.courses()];
+    moveItemInArray(coursesArr, event.previousIndex, event.currentIndex);
+    
+    // Optimistic update
+    this.courses.set(coursesArr);
+
+    // Prepare data for backend
+    const reorderData = coursesArr.map((c, index) => ({
+      id: c.id,
+      order: index
+    }));
+
+    this.isSavingOrder.set(true);
+    this.courseService.updateCoursesOrder(reorderData).subscribe({
+      next: () => {
+        setTimeout(() => this.isSavingOrder.set(false), 1000);
+      },
+      error: (err) => {
+        console.error('Failed to update order', err);
+        this.isSavingOrder.set(false);
+        this.loadCourses(); // Revert on error
+      }
+    });
+
+  }
 }
+

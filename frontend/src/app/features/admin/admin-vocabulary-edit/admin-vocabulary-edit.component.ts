@@ -5,11 +5,14 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CourseService } from '../../../core/services/course.service';
 import { QuillModule } from 'ngx-quill';
 import { HttpClient } from '@angular/common/http';
+import { FileUploadComponent } from '../../../shared/components/file-upload/file-upload.component';
+
 
 @Component({
   selector: 'app-admin-vocabulary-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, QuillModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, QuillModule, FileUploadComponent],
+
   template: `
     <div class="edit-header">
       <div class="header-left">
@@ -36,12 +39,19 @@ import { HttpClient } from '@angular/common/http';
           <div class="form-row">
             <div class="form-group">
               <label>Audio URL</label>
-              <input type="text" formControlName="audioUrl" placeholder="/media/course/lesson/vocabulary.mp3">
+              <div class="input-with-upload">
+                <input type="text" formControlName="audioUrl" placeholder="/media/...">
+                <app-file-upload accept="audio/*" label="Audio" [courseId]="courseId" [lessonId]="lessonId" (uploaded)="vocabForm.get('audioUrl')?.setValue($event)"></app-file-upload>
+              </div>
             </div>
             <div class="form-group">
               <label>VTT URL (Optional)</label>
-              <input type="text" formControlName="vttUrl" placeholder="/media/course/lesson/vocabulary.vtt">
+              <div class="input-with-upload">
+                <input type="text" formControlName="vttUrl" placeholder="/media/...">
+                <app-file-upload accept=".vtt" label="VTT" [courseId]="courseId" [lessonId]="lessonId" (uploaded)="vocabForm.get('vttUrl')?.setValue($event)"></app-file-upload>
+              </div>
             </div>
+
           </div>
         </div>
 
@@ -148,7 +158,15 @@ import { HttpClient } from '@angular/common/http';
       &.full-width { grid-column: span 2; }
     }
 
+    .input-with-upload {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      input { flex: 1; }
+    }
+
     .audio-input-group {
+
       display: flex;
       gap: 10px;
       align-items: center;

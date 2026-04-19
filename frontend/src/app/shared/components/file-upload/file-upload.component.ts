@@ -38,7 +38,11 @@ import { environment } from '../../../../environments/environment';
 export class FileUploadComponent {
   @Input() accept = '*/*';
   @Input() label = 'File';
+  @Input() courseId = '';
+  @Input() lessonId = '';
   @Output() uploaded = new EventEmitter<string>();
+
+
   
   isUploading = false;
   error = '';
@@ -55,7 +59,19 @@ export class FileUploadComponent {
     const formData = new FormData();
     formData.append('file', file);
 
-    this.http.post<any>(`${environment.apiUrl}/upload`, formData).subscribe({
+    let url = `${environment.apiUrl}/upload`;
+    const params = [];
+    if (this.courseId) params.push(`courseId=${this.courseId}`);
+    if (this.lessonId) params.push(`lessonId=${this.lessonId}`);
+    
+    if (params.length > 0) {
+      url += `?${params.join('&')}`;
+    }
+
+
+    this.http.post<any>(url, formData).subscribe({
+
+
       next: (res) => {
         this.uploaded.emit(res.url);
         this.isUploading = false;
