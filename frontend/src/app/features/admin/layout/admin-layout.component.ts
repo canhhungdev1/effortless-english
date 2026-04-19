@@ -1,42 +1,44 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterOutlet, RouterLinkActive } from '@angular/router';
+
+
 
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
   imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
   template: `
-    <div class="admin-container">
+    <div class="admin-container" [class.collapsed]="isSidebarCollapsed()">
       <!-- Sidebar -->
       <aside class="sidebar">
         <div class="sidebar-header">
           <div class="logo">
             <span class="logo-icon">⚡</span>
-            <span class="logo-text">Admin Panel</span>
+            <span class="logo-text" *ngIf="!isSidebarCollapsed()">Admin Panel</span>
           </div>
         </div>
 
         <nav class="sidebar-nav">
           <a routerLink="/admin/dashboard" routerLinkActive="active" class="nav-item">
-            <span class="icon">📊</span>
-            <span class="label">Dashboard</span>
+            <span class="icon" title="Dashboard">📊</span>
+            <span class="label" *ngIf="!isSidebarCollapsed()">Dashboard</span>
           </a>
           <a routerLink="/admin/courses" routerLinkActive="active" class="nav-item">
-            <span class="icon">📚</span>
-            <span class="label">Manage Courses</span>
+            <span class="icon" title="Manage Courses">📚</span>
+            <span class="label" *ngIf="!isSidebarCollapsed()">Manage Courses</span>
           </a>
           <div class="nav-divider"></div>
           <a routerLink="/" class="nav-item back-home">
-            <span class="icon">🏠</span>
-            <span class="label">Back to Site</span>
+            <span class="icon" title="Back to Site">🏠</span>
+            <span class="label" *ngIf="!isSidebarCollapsed()">Back to Site</span>
           </a>
         </nav>
 
         <div class="sidebar-footer">
           <div class="user-info">
             <div class="avatar">AD</div>
-            <div class="details">
+            <div class="details" *ngIf="!isSidebarCollapsed()">
               <span class="name">Administrator</span>
               <span class="role">Project Owner</span>
             </div>
@@ -47,7 +49,12 @@ import { RouterLink, RouterOutlet, RouterLinkActive } from '@angular/router';
       <!-- Main Content -->
       <main class="main-content">
         <header class="top-bar">
-          <h2 class="page-title">Admin Dashboard</h2>
+          <div class="top-bar-left">
+            <button class="toggle-btn" (click)="toggleSidebar()">
+              <span class="icon">{{ isSidebarCollapsed() ? '➡️' : '⬅️' }}</span>
+            </button>
+            <h2 class="page-title">Admin Dashboard</h2>
+          </div>
           <div class="top-actions">
             <button class="action-btn notification">
               <span class="icon">🔔</span>
@@ -64,6 +71,7 @@ import { RouterLink, RouterOutlet, RouterLinkActive } from '@angular/router';
         </div>
       </main>
     </div>
+
   `,
   styles: [`
     .admin-container {
@@ -82,7 +90,14 @@ import { RouterLink, RouterOutlet, RouterLinkActive } from '@angular/router';
       position: sticky;
       top: 0;
       height: 100vh;
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
     }
+
+    .admin-container.collapsed .sidebar {
+      width: 80px;
+    }
+
 
     .sidebar-header {
       padding: 24px;
@@ -213,6 +228,28 @@ import { RouterLink, RouterOutlet, RouterLinkActive } from '@angular/router';
       z-index: 10;
     }
 
+    .top-bar-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .toggle-btn {
+      width: 36px;
+      height: 36px;
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 14px;
+      &:hover { background: #f1f5f9; border-color: #cbd5e1; }
+    }
+
+
     .page-title {
       font-size: 20px;
       font-weight: 700;
@@ -260,4 +297,11 @@ import { RouterLink, RouterOutlet, RouterLinkActive } from '@angular/router';
     }
   `]
 })
-export class AdminLayoutComponent {}
+export class AdminLayoutComponent {
+  isSidebarCollapsed = signal(false);
+
+  toggleSidebar() {
+    this.isSidebarCollapsed.update(v => !v);
+  }
+}
+

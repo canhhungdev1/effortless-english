@@ -16,14 +16,13 @@ import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-
         <h3 class="section-title">Lessons: {{ course()?.title }}</h3>
       </div>
       <div class="header-right-btns">
-        <button *ngIf="hasChanges()" class="save-order-btn" (click)="saveOrder()" [disabled]="isSaving()">
-           {{ isSaving() ? 'Saving Order...' : '💾 Save New Order' }}
-        </button>
+        <span class="saving-badge" *ngIf="isSavingOrder()">Saving order...</span>
         <button class="add-btn" (click)="addLesson()">
           <span class="icon">＋</span>
           Add New Lesson
         </button>
       </div>
+
     </div>
 
     <div class="table-container">
@@ -61,7 +60,13 @@ import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-
                 <button (click)="deleteLesson(lesson)" class="action-icon delete" title="Delete">🗑️</button>
               </div>
             </td>
+
+            <!-- Drag Preview (Giống Course) -->
+            <div *cdkDragPreview class="drag-preview">
+               📄 {{ lesson.title }}
+            </div>
           </tr>
+
           <tr *ngIf="lessons().length === 0">
             <td colspan="5" class="empty-state">No lessons found. Add your first lesson!</td>
           </tr>
@@ -108,12 +113,19 @@ import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-
       &:hover { filter: brightness(1.1); }
     }
     
-    .save-order-btn {
-      background: #fdf2f2; color: #de2c2c; border: 1px solid #fecaca;
-      padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer;
-      &:hover { background: #fee2e2; }
-      &:disabled { opacity: 0.5; cursor: not-allowed; }
+    .saving-badge {
+      background: #fef9c3;
+      color: #854d0e;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      animation: pulse 1.5s infinite;
+      display: flex;
+      align-items: center;
     }
+    @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+
 
     .table-container {
       background: white;
@@ -144,15 +156,35 @@ import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-
       }
     }
 
-    .drag-handle { cursor: grab; color: #94a3b8; font-weight: bold; font-size: 18px; user-select: none; }
-    .lesson-row.cdk-drag-preview {
-      display: table;
-      background: white;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-      border-radius: 8px;
-      td { border: none; }
+    .drag-handle { 
+      cursor: grab; 
+      color: #94a3b8; 
+      font-weight: bold; 
+      font-size: 18px; 
+      user-select: none;
+      text-align: center;
+      &:active { cursor: grabbing; }
     }
-    .lesson-row.cdk-drag-placeholder { opacity: 0.3; }
+
+    .lesson-row {
+      background: white;
+      &.cdk-drag-placeholder { opacity: 0.2; background: #f8fafc; }
+    }
+
+    .drag-preview {
+      padding: 12px 24px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-weight: 600;
+      color: #1e293b;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-left: 4px solid var(--primary);
+    }
+
 
     .order-badge {
       background: #eff6ff;
@@ -233,9 +265,9 @@ export class AdminLessonListComponent implements OnInit {
   course = signal<Course | null>(null);
   lessons = signal<Lesson[]>([]);
   isLoading = signal(false);
-  hasChanges = signal(false);
-  isSaving = signal(false);
+  isSavingOrder = signal(false);
   courseId: string = '';
+
 
   constructor(
     private route: ActivatedRoute,
@@ -262,13 +294,13 @@ export class AdminLessonListComponent implements OnInit {
       next: (lessons) => {
         this.lessons.set(lessons);
         this.isLoading.set(false);
-        this.hasChanges.set(false);
       },
       error: (err) => {
         console.error('Failed to load lessons', err);
         this.isLoading.set(false);
       }
     });
+
   }
 
   drop(event: CdkDragDrop<Lesson[]>) {
@@ -281,26 +313,26 @@ export class AdminLessonListComponent implements OnInit {
     });
     
     this.lessons.set(lessonsArray);
-    this.hasChanges.set(true);
+    this.saveOrder();
   }
 
   saveOrder() {
-    this.isSaving.set(true);
+    this.isSavingOrder.set(true);
     const orderData = this.lessons().map(l => ({ id: l.id, order: l.order }));
     
     this.courseService.updateLessonsOrder(orderData).subscribe({
       next: () => {
-        this.isSaving.set(false);
-        this.hasChanges.set(false);
-        alert('Lesson order updated successfully!');
+        setTimeout(() => this.isSavingOrder.set(false), 1000);
       },
       error: (err) => {
         console.error('Failed to save order', err);
-        this.isSaving.set(false);
+        this.isSavingOrder.set(false);
+        this.loadData(); // Revert
         alert('Failed to save order.');
       }
     });
   }
+
 
   addLesson() {
     this.router.navigate(['/admin/courses', this.courseId, 'lessons', 'new']);
