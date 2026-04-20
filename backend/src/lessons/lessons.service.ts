@@ -136,6 +136,7 @@ export class LessonsService {
   }
 
   async upsertContent(lessonId: string, type: string, data: any) {
+    console.log(`Upserting content for lesson ${lessonId}, type ${type}`, data);
     // For single-instance types (ARTICLE, VOCABULARY), we use the old logic
     const singleInstanceTypes = ['ARTICLE', 'VOCABULARY'];
     
