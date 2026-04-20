@@ -22,9 +22,9 @@ export const routes: Routes = [
           import('./features/lesson-detail/lesson-detail.component').then(m => m.LessonDetailComponent)
       },
       {
-        path: "flashcards",
+        path: 'flashcards',
         loadComponent: () =>
-          import("./features/vocabulary-manager/vocabulary-manager.component").then(m => m.VocabularyManagerComponent)
+          import('./features/vocabulary-manager/vocabulary-manager.component').then(m => m.VocabularyManagerComponent)
       }
     ]
   },
