@@ -1,15 +1,16 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterOutlet, RouterLinkActive } from '@angular/router';
-
+import { ToastComponent } from '../../../shared/components/toast/toast.component';
 
 
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ToastComponent],
   template: `
     <div class="admin-container" [class.collapsed]="isSidebarCollapsed()">
+      <app-toast></app-toast>
       <!-- Sidebar -->
       <aside class="sidebar">
         <div class="sidebar-header">
