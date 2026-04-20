@@ -142,4 +142,19 @@ export class MediaService {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
+
+  async saveVttExternal(content: string, targetPath: string, fileName: string) {
+    try {
+      if (!fs.existsSync(targetPath)) {
+        fs.mkdirSync(targetPath, { recursive: true });
+      }
+      const fullPath = join(targetPath, fileName);
+      fs.writeFileSync(fullPath, content, 'utf8');
+      this.logger.log(`External VTT saved: ${fullPath}`);
+      return { success: true, path: fullPath };
+    } catch (err) {
+      this.logger.error(`Failed to save external VTT: ${err.message}`);
+      throw err;
+    }
+  }
 }

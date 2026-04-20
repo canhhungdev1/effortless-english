@@ -112,6 +112,11 @@ export const routes: Routes = [
         path: 'courses/:courseId/lessons/:lessonId/pov/:id',
         loadComponent: () => 
           import('./features/admin/admin-story-edit/admin-story-edit.component').then(m => m.AdminStoryEditComponent)
+      },
+      {
+        path: 'vtt-creator',
+        loadComponent: () => 
+          import('./features/admin/admin-vtt-creator/admin-vtt-creator.component').then(m => m.AdminVttCreatorComponent)
       }
     ]
   }

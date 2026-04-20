@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Res, NotFoundException, Req } from '@nestjs/common';
+import { Controller, Get, Post, Param, Res, NotFoundException, Req, Body } from '@nestjs/common';
 import { Response } from 'express';
 import { join } from 'path';
 import * as fs from 'fs';
@@ -16,6 +16,11 @@ export class MediaController {
   @Post('maintenance/cleanup')
   cleanup() {
     return this.mediaService.cleanup();
+  }
+
+  @Post('save-vtt-external')
+  saveVttExternal(@Body() body: { content: string; targetPath: string; fileName: string }) {
+    return this.mediaService.saveVttExternal(body.content, body.targetPath, body.fileName);
   }
 
   @Get('*path')

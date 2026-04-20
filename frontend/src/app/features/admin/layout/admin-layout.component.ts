@@ -29,6 +29,10 @@ import { ToastComponent } from '../../../shared/components/toast/toast.component
             <span class="icon" title="Manage Courses">📚</span>
             <span class="label" *ngIf="!isSidebarCollapsed()">Manage Courses</span>
           </a>
+          <a routerLink="/admin/vtt-creator" routerLinkActive="active" class="nav-item">
+            <span class="icon" title="VTT Creator">🎞️</span>
+            <span class="label" *ngIf="!isSidebarCollapsed()">VTT Creator</span>
+          </a>
           <div class="nav-divider"></div>
           <a routerLink="/" class="nav-item back-home">
             <span class="icon" title="Back to Site">🏠</span>
