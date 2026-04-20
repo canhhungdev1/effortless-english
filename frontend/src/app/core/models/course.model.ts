@@ -36,6 +36,7 @@ export interface VocabularyWord {
   audio?: string;
   translation: string;
   example: string;
+  is_favorite?: boolean;
 }
 
 export interface Vocabulary {
@@ -67,6 +68,7 @@ export interface UserVocabulary extends VocabularyWord {
   repetitions: number;
   ease_factor: number;
   next_review: string | Date;
+  is_favorite: boolean;
   created_at: string | Date;
 }
 

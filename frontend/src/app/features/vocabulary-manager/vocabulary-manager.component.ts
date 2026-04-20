@@ -67,9 +67,14 @@ import { FlashcardSessionComponent } from '../../shared/components/flashcards/fl
               <h3 class="word-text">{{ item.word }}</h3>
               <span class="word-phonetic">{{ item.phonetic }}</span>
             </div>
-            <div class="review-status" [title]="'Next review: ' + (item.next_review | date:'mediumDate')">
-              <span class="status-dot" [class.due]="isDue(item)"></span>
-              {{ isDue(item) ? 'Review Due' : 'Learning' }}
+            <div class="card-meta">
+              <button class="card-fav-btn" [class.active]="item.is_favorite" (click)="toggleFavorite(item)" [title]="item.is_favorite ? 'Remove from favorites' : 'Add to favorites'">
+                {{ item.is_favorite ? '❤️' : '♡' }}
+              </button>
+              <div class="review-status" [title]="'Next review: ' + (item.next_review | date:'mediumDate')">
+                <span class="status-dot" [class.due]="isDue(item)"></span>
+                {{ isDue(item) ? 'Due' : 'SRS' }}
+              </div>
             </div>
           </div>
           
@@ -220,9 +225,18 @@ import { FlashcardSessionComponent } from '../../shared/components/flashcards/fl
     .word-text { font-size: 20px; font-weight: 800; color: var(--primary); margin-bottom: 4px; }
     .word-phonetic { font-size: 13px; color: var(--text-muted); font-family: 'Inter', sans-serif; }
     
+    .card-meta { display: flex; align-items: center; gap: 12px; }
+    .card-fav-btn {
+      background: none; border: none; font-size: 18px; cursor: pointer; padding: 4px;
+      line-height: 1; transition: var(--transition);
+      color: var(--text-muted);
+      &:hover { transform: scale(1.2); color: #ff4757; }
+      &.active { color: #ff4757; }
+    }
     .review-status {
-      display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-muted);
-      .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; &.due { background: #ef4444; } }
+      display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;
+      padding: 4px 8px; background: var(--bg-gray); border-radius: 6px;
+      .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; &.due { background: #ef4444; } }
     }
 
     .card-content { flex: 1; display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
@@ -286,8 +300,9 @@ export class VocabularyManagerComponent implements OnInit {
   studySessionWords: any[] = [];
 
   filters = [
-    { key: 'all', label: 'All Words' },
-    { key: 'due', label: 'Due for Review' },
+    { key: 'all', label: 'All' },
+    { key: 'favorites', label: 'Favorites ❤️' },
+    { key: 'due', label: 'Due' },
     { key: 'learning', label: 'Learning' }
   ];
 
@@ -318,9 +333,20 @@ export class VocabularyManagerComponent implements OnInit {
       result = result.filter(v => this.isDue(v));
     } else if (this.activeFilter === 'learning') {
       result = result.filter(v => !this.isDue(v));
+    } else if (this.activeFilter === 'favorites') {
+      result = result.filter(v => v.is_favorite);
     }
 
     this.filteredVocab = result;
+  }
+
+  toggleFavorite(item: UserVocabulary) {
+    this.vocabService.toggleFavorite(item).subscribe({
+      next: () => {
+        // State is updated via service subscription
+      },
+      error: () => this.notification.show('Lỗi khi cập nhật yêu thích', 'error')
+    });
   }
 
   setFilter(key: string) {

@@ -47,6 +47,7 @@ export class VocabularyService {
         ...word,
         id: crypto.randomUUID(),
         user_id: 'guest',
+        is_favorite: true,
         interval: 0,
         repetitions: 0,
         ease_factor: 2.5,
@@ -58,6 +59,41 @@ export class VocabularyService {
       this.saveLocalVocab(updated);
       this.vocabSubject.next(updated);
       return of(newEntry);
+    }
+  }
+
+  toggleFavorite(word: VocabularyWord): Observable<any> {
+    if (this.auth.isLoggedIn) {
+      return this.http.post(`${this.apiUrl}/toggle-favorite`, word).pipe(
+        tap(() => this.refreshVocabulary())
+      );
+    } else {
+      const localData = this.getLocalVocab();
+      const existing = localData.find(v => v.word === word.word);
+      let updated: UserVocabulary[];
+
+      if (existing) {
+        updated = localData.map(v => 
+          v.word === word.word ? { ...v, is_favorite: !v.is_favorite } : v
+        );
+      } else {
+        const newEntry: UserVocabulary = {
+          ...word,
+          id: crypto.randomUUID(),
+          user_id: 'guest',
+          is_favorite: true,
+          interval: 0,
+          repetitions: 0,
+          ease_factor: 2.5,
+          next_review: new Date().toISOString(),
+          created_at: new Date().toISOString()
+        };
+        updated = [newEntry, ...localData];
+      }
+
+      this.saveLocalVocab(updated);
+      this.vocabSubject.next(updated);
+      return of(updated.find(v => v.word === word.word));
     }
   }
 

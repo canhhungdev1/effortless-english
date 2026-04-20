@@ -30,6 +30,7 @@ export class FlashcardsService {
         phonetic: data.phonetic,
         audio: data.audio,
         example: data.example,
+        is_favorite: data.is_favorite ?? true,
         next_review: new Date() // Reset to study immediately
       },
       create: {
@@ -38,9 +39,25 @@ export class FlashcardsService {
         translation: data.translation,
         phonetic: data.phonetic,
         audio: data.audio,
-        example: data.example
+        example: data.example,
+        is_favorite: data.is_favorite ?? true
       }
     });
+  }
+
+  async toggleFavorite(userId: string, data: any) {
+    const word = await this.prisma.userVocabulary.findUnique({
+      where: { user_id_word: { user_id: userId, word: data.word } }
+    });
+
+    if (word) {
+      return this.prisma.userVocabulary.update({
+        where: { id: word.id },
+        data: { is_favorite: !word.is_favorite }
+      });
+    } else {
+      return this.addToFlashcards(userId, { ...data, is_favorite: true });
+    }
   }
 
   async processReview(id: string, rating: number) {

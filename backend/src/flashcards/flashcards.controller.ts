@@ -22,6 +22,11 @@ export class FlashcardsController {
     return this.flashcardsService.addToFlashcards(this.DUMMY_USER_ID, data);
   }
 
+  @Post('toggle-favorite')
+  toggleFavorite(@Body() data: any) {
+    return this.flashcardsService.toggleFavorite(this.DUMMY_USER_ID, data);
+  }
+
   @Patch('review/:id')
   review(@Param('id') id: string, @Body('rating') rating: number) {
     return this.flashcardsService.processReview(id, rating);

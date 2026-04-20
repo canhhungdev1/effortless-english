@@ -80,6 +80,7 @@ model UserVocabulary {
   repetitions     Int      @default(0)    
   ease_factor     Float    @default(2.5)  
   next_review     DateTime @default(now()) @map("next_review")
+  is_favorite     Boolean  @default(false) @map("is_favorite")
   
   created_at      DateTime @default(now()) @map("created_at")
   updated_at      DateTime @updatedAt @map("updated_at")

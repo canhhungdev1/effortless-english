@@ -111,7 +111,9 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
                     <span class="kw-phonetic">{{ kw.phonetic }}</span>
                   </div>
                   <div class="kw-actions">
-                    <button class="kw-audio-btn" (click)="saveToFlashcards(kw); $event.stopPropagation()" title="Add to Flashcards">❤️</button>
+                    <button class="kw-favorite-btn" [class.active]="isFavorite(kw.word)" (click)="toggleFavorite(kw); $event.stopPropagation()" [title]="isFavorite(kw.word) ? 'Remove from favorites' : 'Add to favorites'">
+                      {{ isFavorite(kw.word) ? '❤️' : '♡' }}
+                    </button>
                     <button *ngIf="kw.audio" class="kw-audio-btn" (click)="playAudio(kw.audio); $event.stopPropagation()" title="Listen pronunciation">🔊</button>
                   </div>
                 </div>
@@ -301,6 +303,29 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
       &:hover {
         background: var(--primary-light);
         transform: scale(1.1);
+      }
+    }
+    .kw-favorite-btn {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 50%;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      line-height: 1;
+      color: var(--text-muted);
+      
+      &:hover {
+        background: var(--primary-light);
+        transform: scale(1.2);
+        color: var(--primary);
+      }
+
+      &.active {
+        color: #ff4757;
+        transform: scale(1.1);
+        text-shadow: 0 0 10px rgba(255, 71, 87, 0.3);
       }
     }
     .kw-word {
@@ -548,10 +573,20 @@ export class LessonDetailComponent implements OnInit {
     audio.play();
   }
 
-  saveToFlashcards(word: any) {
-    this.vocabService.addWord(word).subscribe({
-      next: () => this.notification.show(`Đã lưu "${word.word}" vào Flashcards!`),
-      error: (err: any) => this.notification.show('Lỗi khi lưu từ vựng', 'error')
+  isFavorite(word: string): boolean {
+    const favorites = this.vocabService['vocabSubject'].value;
+    return favorites.some(v => v.word === word && v.is_favorite);
+  }
+
+  toggleFavorite(word: any) {
+    this.vocabService.toggleFavorite(word).subscribe({
+      next: (res) => {
+        const isFav = res.is_favorite;
+        this.notification.show(
+          isFav ? `Đã thêm "${word.word}" vào danh sách yêu thích!` : `Đã bỏ "${word.word}" khỏi danh sách yêu thích`
+        );
+      },
+      error: (err: any) => this.notification.show('Lỗi khi cập nhật yêu thích', 'error')
     });
   }
 
