@@ -59,3 +59,15 @@ export interface StoryContent {
   vttUrl?: string;
   lines: StoryLine[];
 }
+
+export interface UserVocabulary extends VocabularyWord {
+  id: string;
+  user_id: string;
+  interval: number;
+  repetitions: number;
+  ease_factor: number;
+  next_review: string | Date;
+  created_at: string | Date;
+}
+
+export type ReviewRating = 0 | 1 | 2 | 3;

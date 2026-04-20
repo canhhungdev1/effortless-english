@@ -6,6 +6,8 @@ import { CourseService } from '../../core/services/course.service';
 import { Lesson, StoryLine, StoryContent } from '../../core/models/course.model';
 import { AudioPlayerComponent } from '../../shared/components/audio-player/audio-player.component';
 import { FlashcardSessionComponent } from '../../shared/components/flashcards/flashcard-session.component';
+import { VocabularyService } from '../../core/services/vocabulary.service';
+import { NotificationService } from '../../core/services/notification.service';
 
 type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
 
@@ -410,6 +412,8 @@ export class LessonDetailComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private courseService: CourseService,
+    private vocabService: VocabularyService,
+    private notification: NotificationService,
     private http: HttpClient
   ) { }
 
@@ -417,7 +421,7 @@ export class LessonDetailComponent implements OnInit {
     this.courseSlug = this.route.snapshot.paramMap.get('courseSlug')!;
     this.lessonSlug = this.route.snapshot.paramMap.get('lessonSlug')!;
 
-    this.courseService.getLesson(this.courseSlug, this.lessonSlug).subscribe(lesson => {
+    this.courseService.getLesson(this.courseSlug, this.lessonSlug).subscribe((lesson: Lesson) => {
       if (lesson) {
         this.lesson.set(lesson);
         this.buildTabs(lesson);
@@ -492,9 +496,9 @@ export class LessonDetailComponent implements OnInit {
 
   private loadAllVtts(lesson: Lesson) {
     if (lesson.vocabulary?.vttUrl) this.loadVtt(lesson.vocabulary.vttUrl, 'vocabulary');
-    lesson.miniStories?.forEach((s, i) => { if (s.vttUrl) this.loadVtt(s.vttUrl, 'miniStories', i); });
-    lesson.commentaries?.forEach((s, i) => { if (s.vttUrl) this.loadVtt(s.vttUrl, 'commentaries', i); });
-    lesson.pointOfViews?.forEach((s, i) => { if (s.vttUrl) this.loadVtt(s.vttUrl, 'pointOfViews', i); });
+    lesson.miniStories?.forEach((s: any, i: number) => { if (s.vttUrl) this.loadVtt(s.vttUrl, 'miniStories', i); });
+    lesson.commentaries?.forEach((s: any, i: number) => { if (s.vttUrl) this.loadVtt(s.vttUrl, 'commentaries', i); });
+    lesson.pointOfViews?.forEach((s: any, i: number) => { if (s.vttUrl) this.loadVtt(s.vttUrl, 'pointOfViews', i); });
   }
 
   onAudioTimeUpdate(currentTime: number, type: 'vocabulary') {
@@ -545,9 +549,9 @@ export class LessonDetailComponent implements OnInit {
   }
 
   saveToFlashcards(word: any) {
-    this.courseService.addToFlashcards(word).subscribe({
-      next: () => alert(`Saved "${word.word}" to your flashcards!`),
-      error: (err) => console.error('Failed to save to flashcards', err)
+    this.vocabService.addWord(word).subscribe({
+      next: () => this.notification.show(`Đã lưu "${word.word}" vào Flashcards!`),
+      error: (err: any) => this.notification.show('Lỗi khi lưu từ vựng', 'error')
     });
   }
 

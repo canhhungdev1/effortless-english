@@ -1,0 +1,137 @@
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject, Observable, of, tap, switchMap, forkJoin } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { UserVocabulary, VocabularyWord, ReviewRating } from '../models/course.model';
+import { AuthService } from './auth.service';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class VocabularyService {
+  private http = inject(HttpClient);
+  private auth = inject(AuthService);
+  private apiUrl = `${environment.apiUrl}/flashcards`;
+  private LOCAL_STORAGE_KEY = 'user_vocabulary_guest';
+
+  // State
+  private vocabSubject = new BehaviorSubject<UserVocabulary[]>([]);
+  vocab$ = this.vocabSubject.asObservable();
+
+  constructor() {
+    // Initial load based on auth state
+    this.auth.user$.subscribe(user => {
+      this.refreshVocabulary();
+    });
+  }
+
+  refreshVocabulary() {
+    if (this.auth.isLoggedIn) {
+      this.http.get<UserVocabulary[]>(`${this.apiUrl}/all`).subscribe(data => {
+        this.vocabSubject.next(data);
+      });
+    } else {
+      const localData = this.getLocalVocab();
+      this.vocabSubject.next(localData);
+    }
+  }
+
+  addWord(word: VocabularyWord): Observable<any> {
+    if (this.auth.isLoggedIn) {
+      return this.http.post(`${this.apiUrl}/add`, word).pipe(
+        tap(() => this.refreshVocabulary())
+      );
+    } else {
+      const localData = this.getLocalVocab();
+      const newEntry: UserVocabulary = {
+        ...word,
+        id: crypto.randomUUID(),
+        user_id: 'guest',
+        interval: 0,
+        repetitions: 0,
+        ease_factor: 2.5,
+        next_review: new Date().toISOString(),
+        created_at: new Date().toISOString()
+      };
+      
+      const updated = [newEntry, ...localData.filter(v => v.word !== word.word)];
+      this.saveLocalVocab(updated);
+      this.vocabSubject.next(updated);
+      return of(newEntry);
+    }
+  }
+
+  deleteWord(id: string): Observable<any> {
+    if (this.auth.isLoggedIn) {
+      return this.http.delete(`${this.apiUrl}/${id}`).pipe(
+        tap(() => this.refreshVocabulary())
+      );
+    } else {
+      const filtered = this.getLocalVocab().filter(v => v.id !== id);
+      this.saveLocalVocab(filtered);
+      this.vocabSubject.next(filtered);
+      return of({ success: true });
+    }
+  }
+
+  updateWord(id: string, data: Partial<VocabularyWord>): Observable<any> {
+    if (this.auth.isLoggedIn) {
+      return this.http.patch(`${this.apiUrl}/${id}`, data).pipe(
+        tap(() => this.refreshVocabulary())
+      );
+    } else {
+      const updated = this.getLocalVocab().map(v => 
+        v.id === id ? { ...v, ...data } : v
+      );
+      this.saveLocalVocab(updated);
+      this.vocabSubject.next(updated);
+      return of({ success: true });
+    }
+  }
+
+  reviewWord(id: string, rating: ReviewRating): Observable<any> {
+    if (this.auth.isLoggedIn) {
+      return this.http.patch(`${this.apiUrl}/review/${id}`, { rating }).pipe(
+        tap(() => this.refreshVocabulary())
+      );
+    } else {
+      // Simple SM-2 implementation for LocalStorage
+      const updated = this.getLocalVocab().map(v => {
+        if (v.id === id) {
+          const nextDate = new Date();
+          // Simplified logic: 0 -> 1h, 1 -> 1d, 2 -> 4d, 3 -> 7d
+          const days = rating === 0 ? 0 : (rating === 1 ? 1 : (rating === 2 ? 4 : 7));
+          nextDate.setDate(nextDate.getDate() + days);
+          return { ...v, next_review: nextDate.toISOString() };
+        }
+        return v;
+      });
+      this.saveLocalVocab(updated);
+      this.vocabSubject.next(updated);
+      return of({ success: true });
+    }
+  }
+
+  syncToCloud(): Observable<any> {
+    const localData = this.getLocalVocab();
+    if (localData.length === 0 || !this.auth.isLoggedIn) return of(null);
+
+    // Send all local words to backend
+    const requests = localData.map(word => this.http.post(`${this.apiUrl}/add`, word));
+    return forkJoin(requests).pipe(
+      tap(() => {
+        localStorage.removeItem(this.LOCAL_STORAGE_KEY);
+        this.refreshVocabulary();
+      })
+    );
+  }
+
+  private getLocalVocab(): UserVocabulary[] {
+    const data = localStorage.getItem(this.LOCAL_STORAGE_KEY);
+    return data ? JSON.parse(data) : [];
+  }
+
+  private saveLocalVocab(data: UserVocabulary[]) {
+    localStorage.setItem(this.LOCAL_STORAGE_KEY, JSON.stringify(data));
+  }
+}

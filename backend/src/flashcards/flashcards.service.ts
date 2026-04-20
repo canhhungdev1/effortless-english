@@ -86,4 +86,22 @@ export class FlashcardsService {
       }
     });
   }
+
+  async updateWord(id: string, data: any) {
+    return this.prisma.userVocabulary.update({
+      where: { id },
+      data: {
+        translation: data.translation,
+        phonetic: data.phonetic,
+        audio: data.audio,
+        example: data.example
+      }
+    });
+  }
+
+  async deleteWord(id: string) {
+    return this.prisma.userVocabulary.delete({
+      where: { id }
+    });
+  }
 }

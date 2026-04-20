@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CourseService } from '../../core/services/course.service';
@@ -38,9 +38,10 @@ import { Course, Lesson } from '../../core/models/course.model';
 
         <div class="lesson-list">
           <a
-            *ngFor="let lesson of lessons(); let i = index"
+            *ngFor="let lesson of displayedLessons(); let i = index"
             [routerLink]="['/courses', course()?.slug, 'lessons', lesson.slug]"
             class="lesson-item"
+            [style.animation-delay.ms]="(i % pageSize) * 50"
           >
             <div class="lesson-icon">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
@@ -59,6 +60,16 @@ import { Course, Lesson } from '../../core/models/course.model';
             </div>
             <button class="learn-btn">Learn</button>
           </a>
+        </div>
+
+        <!-- Load More Button -->
+        <div class="load-more-container" *ngIf="visibleCount() < lessons().length">
+          <button class="load-more-btn" (click)="loadMore()">
+            <span>Show More Lessons</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9l6 6 6-6"/>
+            </svg>
+          </button>
         </div>
       </div>
     </div>
@@ -216,6 +227,12 @@ import { Course, Lesson } from '../../core/models/course.model';
       transition: var(--transition);
       cursor: pointer;
       text-decoration: none;
+      animation: fadeInSlide 0.4s ease forwards;
+    }
+
+    @keyframes fadeInSlide {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .lesson-item:hover {
@@ -305,6 +322,43 @@ import { Course, Lesson } from '../../core/models/course.model';
     .lesson-item:hover .learn-btn {
       background: var(--primary);
       color: white;
+    }
+
+    /* Load More */
+    .load-more-container {
+      margin-top: 32px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .load-more-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 32px;
+      background: var(--bg-white);
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      color: var(--text-primary);
+      font-size: 15px;
+      font-weight: 600;
+      transition: var(--transition);
+      cursor: pointer;
+
+      &:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: var(--primary-light);
+        transform: translateY(-2px);
+      }
+
+      svg {
+        transition: transform 0.3s ease;
+      }
+
+      &:hover svg {
+        transform: translateY(2px);
+      }
     }
 
     /* Tablet */
@@ -419,6 +473,13 @@ import { Course, Lesson } from '../../core/models/course.model';
 export class CourseDetailComponent implements OnInit {
   course = signal<Course | undefined>(undefined);
   lessons = signal<Lesson[]>([]);
+  
+  pageSize = 10;
+  visibleCount = signal(this.pageSize);
+
+  displayedLessons = computed(() => {
+    return this.lessons().slice(0, this.visibleCount());
+  });
 
   constructor(
     private route: ActivatedRoute,
@@ -433,5 +494,9 @@ export class CourseDetailComponent implements OnInit {
     this.courseService.getLessons(courseSlug).subscribe(lessons => {
       this.lessons.set(lessons);
     });
+  }
+
+  loadMore() {
+    this.visibleCount.update(count => count + this.pageSize);
   }
 }

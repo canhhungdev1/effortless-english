@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Patch } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Delete, Headers } from '@nestjs/common';
 import { FlashcardsService } from './flashcards.service';
 
 @Controller('api/flashcards')
@@ -25,5 +25,15 @@ export class FlashcardsController {
   @Patch('review/:id')
   review(@Param('id') id: string, @Body('rating') rating: number) {
     return this.flashcardsService.processReview(id, rating);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() data: any) {
+    return this.flashcardsService.updateWord(id, data);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.flashcardsService.deleteWord(id);
   }
 }

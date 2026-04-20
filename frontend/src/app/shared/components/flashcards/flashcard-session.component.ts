@@ -2,7 +2,7 @@ import { Component, Input, Output, EventEmitter, OnInit, ViewChild } from '@angu
 import { CommonModule } from '@angular/common';
 import { VocabularyWord } from '../../../core/models/course.model';
 import { FlashcardComponent } from './flashcard.component';
-import { CourseService } from '../../../core/services/course.service';
+import { VocabularyService } from '../../../core/services/vocabulary.service';
 
 @Component({
   selector: 'app-flashcard-session',
@@ -148,7 +148,7 @@ export class FlashcardSessionComponent implements OnInit {
   isFinished = false;
   isRevealed = false;
 
-  constructor(private courseService: CourseService) {}
+  constructor(private vocabService: VocabularyService) {}
 
   ngOnInit() {
     this.restart();
@@ -167,7 +167,7 @@ export class FlashcardSessionComponent implements OnInit {
     
     // If it's an SRS word (has id), update backend
     if (currentWord.id) {
-      this.courseService.reviewFlashcard(currentWord.id, rating).subscribe();
+      this.vocabService.reviewWord(currentWord.id, rating as any).subscribe();
     }
 
     this.nextCard();
