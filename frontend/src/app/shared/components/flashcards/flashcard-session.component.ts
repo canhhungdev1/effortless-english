@@ -78,68 +78,94 @@ import { VocabularyService } from '../../../core/services/vocabulary.service';
   `,
   styles: [`
     .flashcard-overlay {
-      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(8px); z-index: 1000; display: flex;
-      align-items: center; justify-content: center; padding: 20px; animation: fadeIn 0.3s ease;
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9);
+      backdrop-filter: blur(12px); z-index: 1000; display: flex;
+      align-items: center; justify-content: center; padding: 20px; animation: fadeIn 0.4s ease;
     }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
     .session-container {
-      width: 100%; max-width: 550px; background: var(--bg-white);
-      border-radius: var(--radius-xl); overflow: hidden; display: flex;
-      flex-direction: column; box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+      width: 100%; max-width: 600px; background: #ffffff;
+      border-radius: 32px; overflow: hidden; display: flex;
+      flex-direction: column; box-shadow: 0 40px 100px rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,255,255,0.1);
     }
 
-    .session-header { padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-light); }
-    .session-title { font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 0; }
-    .progress-info { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
-    .close-btn { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: var(--transition); &:hover { background: var(--bg-gray); color: var(--text-primary); } }
+    .session-header { 
+      padding: 24px 32px; display: flex; align-items: center; justify-content: space-between; 
+      background: #f8f9fa; border-bottom: 1px solid #eee;
+    }
+    .session-title { font-size: 20px; font-weight: 800; color: #2d3436; margin: 0; letter-spacing: -0.5px; }
+    .progress-info { font-size: 14px; font-weight: 600; color: var(--text-muted); margin-top: 4px; }
+    .close-btn { 
+      width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+      color: #636e72; transition: all 0.2s; background: #dfe6e9;
+      &:hover { background: #b2bec3; color: #2d3436; transform: rotate(90deg); } 
+    }
 
-    .progress-container { height: 4px; background: var(--bg-gray); width: 100%; }
-    .progress-bar { height: 100%; background: var(--primary); transition: width 0.3s ease; }
+    .progress-container { height: 6px; background: #eee; width: 100%; }
+    .progress-bar { 
+      height: 100%; background: linear-gradient(90deg, var(--primary), #ff4757); 
+      border-radius: 0 3px 3px 0; transition: width 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    }
 
-    .card-area { padding: 40px 32px; min-height: 460px; display: flex; align-items: center; justify-content: center; }
+    .card-area { 
+      padding: 40px 32px; min-height: 480px; display: flex; align-items: center; justify-content: center;
+      background: radial-gradient(circle at center, #ffffff 0%, #f1f2f6 100%);
+    }
 
     .session-footer {
-      padding: 24px 32px; min-height: 120px; display: flex; align-items: center; justify-content: center;
-      border-top: 1px solid var(--border-light); background: #fcfcfc;
+      padding: 32px; min-height: 140px; display: flex; align-items: center; justify-content: center;
+      border-top: 1px solid #eee; background: #ffffff;
     }
 
-    .nav-hint { color: var(--text-muted); font-size: 14px; font-style: italic; }
+    .nav-hint { 
+      color: var(--text-muted); font-size: 15px; font-weight: 500; 
+      display: flex; align-items: center; gap: 8px;
+      animation: bounce 2s infinite;
+    }
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 
-    .rating-controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 100%; }
+    .rating-controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; width: 100%; }
     
     .rate-btn {
-      display: flex; flex-direction: column; align-items: center; gap: 4px;
-      padding: 12px 8px; border: 1px solid var(--border-color); border-radius: 12px;
-      background: white; cursor: pointer; transition: all 0.2s;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      padding: 16px 8px; border: 2px solid #eee; border-radius: 20px;
+      background: white; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       
-      .btn-label { font-weight: 700; font-size: 14px; }
-      .btn-time { font-size: 11px; color: var(--text-muted); }
+      .btn-label { font-weight: 800; font-size: 15px; text-transform: uppercase; }
+      .btn-time { font-size: 12px; font-weight: 600; color: var(--text-muted); }
 
-      &:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
-      &.again { border-color: #ef4444; .btn-label { color: #ef4444; } &:hover { background: #fef2f2; } }
-      &.hard { border-color: #f59e0b; .btn-label { color: #f59e0b; } &:hover { background: #fffbeb; } }
-      &.good { border-color: #3b82f6; .btn-label { color: #3b82f6; } &:hover { background: #eff6ff; } }
-      &.easy { border-color: #22c55e; .btn-label { color: #22c55e; } &:hover { background: #f0fdf4; } }
+      &:hover { transform: translateY(-8px); border-color: currentColor; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+      &.again { color: #ff4757; &:hover { background: #fff5f5; } }
+      &.hard { color: #ffa502; &:hover { background: #fffaf0; } }
+      &.good { color: #2e86de; &:hover { background: #f0f7ff; } }
+      &.easy { color: #2ecc71; &:hover { background: #f2fff7; } }
     }
 
     .primary-btn {
-      padding: 12px 32px; font-size: 15px; font-weight: 700; background: var(--primary);
-      color: white; border-radius: var(--radius-md); transition: var(--transition);
-      box-shadow: 0 4px 12px rgba(229, 57, 53, 0.2);
-      &:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(229, 57, 53, 0.3); }
+      padding: 16px 48px; font-size: 16px; font-weight: 800; background: var(--primary);
+      color: white; border-radius: 20px; transition: all 0.3s;
+      box-shadow: 0 10px 25px rgba(229, 57, 53, 0.3);
+      &:hover { transform: scale(1.05); box-shadow: 0 15px 35px rgba(229, 57, 53, 0.4); }
     }
 
-    .secondary-btn { padding: 10px 24px; font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-top: 12px; &:hover { text-decoration: underline; } }
+    .secondary-btn { 
+      padding: 12px 24px; font-size: 15px; font-weight: 700; color: #636e72; 
+      margin-top: 16px; transition: color 0.2s;
+      &:hover { color: var(--primary); text-decoration: none; } 
+    }
 
-    .finish-screen { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; animation: zoomIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-    @keyframes zoomIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-    .finish-icon { font-size: 64px; margin-bottom: 8px; }
+    .finish-screen { 
+      text-align: center; display: flex; flex-direction: column; align-items: center; gap: 16px; 
+      animation: slideUp 0.6s cubic-bezier(0.23, 1, 0.32, 1); 
+    }
+    @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .finish-icon { font-size: 80px; margin-bottom: 16px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.1)); }
   `]
 })
 export class FlashcardSessionComponent implements OnInit {
-  @Input() words: any[] = []; // Can be VocabularyWord or UserVocabulary
+  @Input() words: any[] = [];
   @Output() close = new EventEmitter<void>();
   @ViewChild('cardRef') cardRef?: FlashcardComponent;
 
@@ -147,6 +173,9 @@ export class FlashcardSessionComponent implements OnInit {
   currentIndex = 0;
   isFinished = false;
   isRevealed = false;
+
+  private successSound = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
+  private clickSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3');
 
   constructor(private vocabService: VocabularyService) {}
 
@@ -163,9 +192,12 @@ export class FlashcardSessionComponent implements OnInit {
   }
 
   onRate(rating: number) {
+    // Play click sound
+    this.clickSound.currentTime = 0;
+    this.clickSound.play().catch(() => {});
+
     const currentWord = this.shuffledDeck[this.currentIndex];
     
-    // If it's an SRS word (has id), update backend
     if (currentWord.id) {
       this.vocabService.reviewWord(currentWord.id, rating as any).subscribe();
     }
@@ -180,7 +212,13 @@ export class FlashcardSessionComponent implements OnInit {
       this.cardRef?.reset();
     } else {
       this.isFinished = true;
+      this.playSuccessSound();
     }
+  }
+
+  private playSuccessSound() {
+    this.successSound.currentTime = 0;
+    this.successSound.play().catch(() => {});
   }
 
   restart() {
