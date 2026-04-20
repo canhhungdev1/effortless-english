@@ -7,12 +7,13 @@ import { NotificationService } from '../../../core/services/notification.service
 import { QuillModule } from 'ngx-quill';
 import { HttpClient } from '@angular/common/http';
 import { FileUploadComponent } from '../../../shared/components/file-upload/file-upload.component';
+import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 
 
 @Component({
   selector: 'app-admin-vocabulary-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, QuillModule, FileUploadComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, QuillModule, FileUploadComponent, DragDropModule],
 
   template: `
     <div class="edit-header">
@@ -77,16 +78,18 @@ import { FileUploadComponent } from '../../../shared/components/file-upload/file
             <table class="vocab-table" *ngIf="keywords.length > 0">
               <thead>
                 <tr>
-                  <th>#</th>
+                  <th style="width: 50px"></th>
+                  <th style="width: 60px">#</th>
                   <th>Word / Phrase</th>
                   <th>Phonetic</th>
                   <th>Translation</th>
                   <th>Actions</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr *ngFor="let kw of keywords.controls; let i=index">
-                  <td>{{ i + 1 }}</td>
+              <tbody cdkDropList (cdkDropListDropped)="drop($event)">
+                <tr *ngFor="let kw of keywords.controls; let i=index" cdkDrag class="drag-row">
+                  <td class="drag-handle" cdkDragHandle>⋮⋮</td>
+                  <td class="index-col">{{ i + 1 }}</td>
                   <td class="word-col">{{ kw.get('word')?.value }}</td>
                   <td><span class="phonetic-badge">{{ kw.get('phonetic')?.value || '-' }}</span></td>
                   <td class="translation-col">{{ kw.get('translation')?.value }}</td>
@@ -96,6 +99,11 @@ import { FileUploadComponent } from '../../../shared/components/file-upload/file
                       <button type="button" class="icon-btn delete" (click)="removeKeyword(i)" title="Delete">🗑️</button>
                     </div>
                   </td>
+
+                  <!-- Drag Preview -->
+                  <div *cdkDragPreview class="drag-preview">
+                    🔤 {{ kw.get('word')?.value }}
+                  </div>
                 </tr>
               </tbody>
             </table>
@@ -238,8 +246,40 @@ import { FileUploadComponent } from '../../../shared/components/file-upload/file
     .vocab-table th, .vocab-table td { padding: 16px; border-bottom: 1px solid #e2e8f0; }
     .vocab-table th { background: #f1f5f9; font-size: 13px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
     .vocab-table tr:last-child td { border-bottom: none; }
-    .vocab-table tr:hover { background: #f1f5f9; }
+    .vocab-table tr:hover:not(.cdk-drag-placeholder) { background: #f1f5f9; }
     
+    .drag-handle { 
+      cursor: grab; 
+      color: #94a3b8; 
+      font-weight: bold; 
+      font-size: 18px; 
+      user-select: none;
+      text-align: center;
+      &:active { cursor: grabbing; }
+    }
+
+    .drag-row {
+      background: white;
+      &.cdk-drag-placeholder { opacity: 0.2; background: #f8fafc; }
+    }
+
+    .drag-preview {
+      padding: 12px 24px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-weight: 600;
+      color: #1e293b;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-left: 4px solid var(--primary);
+      z-index: 2000;
+      pointer-events: none;
+    }
+
+    .index-col { font-weight: 700; color: #64748b; font-family: monospace; }
     .word-col { font-weight: 700; color: #1e293b; font-size: 15px; }
     .phonetic-badge { background: #e2e8f0; color: #475569; padding: 4px 8px; border-radius: 6px; font-size: 13px; font-family: monospace; }
     .translation-col { color: #64748b; font-size: 14px; }
@@ -377,6 +417,20 @@ export class AdminVocabularyEditComponent implements OnInit {
     });
     this.keywords.push(kwGroup);
     return this.keywords.length - 1;
+  }
+
+  drop(event: CdkDragDrop<any[]>) {
+    const from = event.previousIndex;
+    const to = event.currentIndex;
+    
+    if (from === to) return;
+
+    const group = this.keywords.at(from);
+    this.keywords.removeAt(from);
+    this.keywords.insert(to, group);
+    
+    // Automatically save order
+    this.saveVocabulary();
   }
 
   // Modal Methods
