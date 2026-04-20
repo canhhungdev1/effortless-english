@@ -13,8 +13,8 @@ import { VocabularyWord } from '../../../core/models/course.model';
         <div class="flashcard-front">
           <div class="card-content">
             <span class="label">English</span>
-            <h2 class="word">{{ data.word }}</h2>
-            <p class="phonetic">{{ data.phonetic }}</p>
+            <h2 class="word" [class.long-word]="data.word.length > 15">{{ data.word }}</h2>
+            <p class="phonetic" *ngIf="data.phonetic && data.phonetic !== 'Phrase'">{{ data.phonetic }}</p>
             <div class="hint">Click to flip</div>
           </div>
         </div>
@@ -108,6 +108,12 @@ import { VocabularyWord } from '../../../core/models/course.model';
       font-weight: 800;
       color: var(--primary);
       margin: 0;
+      line-height: 1.2;
+      word-break: break-word;
+
+      &.long-word {
+        font-size: 28px;
+      }
     }
 
     .phonetic {

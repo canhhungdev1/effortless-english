@@ -87,11 +87,15 @@ import { RouterLink, RouterOutlet, RouterLinkActive } from '@angular/router';
       color: white;
       display: flex;
       flex-direction: column;
-      position: sticky;
+      position: fixed;
       top: 0;
+      left: 0;
       height: 100vh;
       transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      overflow: hidden;
+      overflow-y: auto;
+      z-index: 100;
+      scrollbar-width: none;
+      &::-webkit-scrollbar { display: none; }
     }
 
     .admin-container.collapsed .sidebar {
@@ -212,7 +216,13 @@ import { RouterLink, RouterOutlet, RouterLinkActive } from '@angular/router';
       flex: 1;
       display: flex;
       flex-direction: column;
-      overflow-x: hidden;
+      margin-left: 260px;
+      transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      min-width: 0;
+    }
+
+    .admin-container.collapsed .main-content {
+      margin-left: 80px;
     }
 
     .top-bar {

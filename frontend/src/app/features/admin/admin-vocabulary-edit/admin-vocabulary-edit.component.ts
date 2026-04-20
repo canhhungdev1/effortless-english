@@ -317,30 +317,54 @@ export class AdminVocabularyEditComponent implements OnInit {
   }
 
   fetchFromApi(index: number) {
-    const word = this.keywords.at(index).get('word')?.value;
+    const wordControl = this.keywords.at(index).get('word');
+    const word = wordControl?.value?.trim();
+    
     if (!word) {
-      alert('Please enter a word first');
+      alert('Please enter a word or phrase first');
       return;
     }
 
-    this.http.get<any>(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`).subscribe({
+    const isPhrase = word.includes(' ');
+    
+    // 1. Fetch Translation (For both word and phrase)
+    this.http.get<any>(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(word)}&langpair=en|vi`).subscribe({
       next: (res) => {
-        if (res && res.length > 0) {
-          const entry = res[0];
-          const phonetic = entry.phonetic || (entry.phonetics.find((p: any) => p.text)?.text);
-          const audio = entry.phonetics.find((p: any) => p.audio && p.audio !== '')?.audio;
-          
+        if (res?.responseData?.translatedText) {
           this.keywords.at(index).patchValue({
-            phonetic: phonetic || '',
-            audio: audio || ''
+            translation: res.responseData.translatedText
           });
-
-          // Optional: if translation is empty, we could fill it with the first definition (in English)
-          // But since we need Vietnamese, we leave it to the admin or integrate translation API later
         }
       },
-      error: () => alert('Word not found in dictionary')
+      error: () => console.warn('Translation not found')
     });
+
+    // 2. Fetch Dictionary Info (Only for single words)
+    if (!isPhrase) {
+      this.http.get<any>(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`).subscribe({
+        next: (res) => {
+          if (res && res.length > 0) {
+            const entry = res[0];
+            const phonetic = entry.phonetic || (entry.phonetics.find((p: any) => p.text)?.text);
+            const audio = entry.phonetics.find((p: any) => p.audio && p.audio !== '')?.audio;
+            
+            this.keywords.at(index).patchValue({
+              phonetic: phonetic || '',
+              audio: audio || ''
+            });
+          }
+        },
+        error: () => {
+          // If word not found in dictionary, we still have the translation from step 1
+          console.warn('Word not found in dictionary');
+        }
+      });
+    } else {
+      // For phrases, we clear phonetic since it doesn't apply standardly
+      this.keywords.at(index).patchValue({
+        phonetic: 'Phrase'
+      });
+    }
   }
 
   playKeywordAudio(index: number) {
