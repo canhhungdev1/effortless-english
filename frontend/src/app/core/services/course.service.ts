@@ -87,11 +87,11 @@ export class CourseService {
   }
 
   getMediaStatus(): Observable<any> {
-    return this.http.get(`${this.apiUrl.replace('/api', '')}/media/maintenance/status`);
+    return this.http.get(`${this.apiUrl}/media/maintenance/status`);
   }
 
   cleanupMedia(): Observable<any> {
-    return this.http.post(`${this.apiUrl.replace('/api', '')}/media/maintenance/cleanup`, {});
+    return this.http.post(`${this.apiUrl}/media/maintenance/cleanup`, {});
   }
 }
 

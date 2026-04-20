@@ -24,8 +24,7 @@ export class MediaController {
   }
 
   @Get('*path')
-
-  serveMedia(@Param('path') path: string | string[], @Res() res: Response) {
+  serveMedia(@Param('path') path: string, @Res() res: Response) {
     const filePathRelative = Array.isArray(path) ? path.join('/') : path;
 
 

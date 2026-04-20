@@ -4,14 +4,16 @@ import { SidebarComponent } from '../../components/sidebar/sidebar.component';
 import { HeaderComponent } from '../../components/header/header.component';
 import { ToastComponent } from '../../components/toast/toast.component';
 import { CommonModule } from '@angular/common';
+import { LoadingComponent } from '../../components/loading/loading.component';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [RouterOutlet, SidebarComponent, HeaderComponent, ToastComponent, CommonModule],
+  imports: [RouterOutlet, SidebarComponent, HeaderComponent, ToastComponent, CommonModule, LoadingComponent],
   template: `
     <div class="layout" [class.desktop-collapsed]="isDesktopCollapsed">
       <app-toast />
+      <app-loading />
       <div class="sidebar-overlay"
            [class.visible]="isMobileOpen"
            (click)="closeMobileSidebar()"></div>

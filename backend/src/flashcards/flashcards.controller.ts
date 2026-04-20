@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Param, Patch, Delete, Headers } from '@nestjs/common';
 import { FlashcardsService } from './flashcards.service';
 
-@Controller('api/flashcards')
+@Controller('flashcards')
 export class FlashcardsController {
   constructor(private readonly flashcardsService: FlashcardsService) {}
 
