@@ -90,7 +90,12 @@ import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
                 <tr *ngFor="let kw of keywords.controls; let i=index" cdkDrag class="drag-row">
                   <td class="drag-handle" cdkDragHandle>⋮⋮</td>
                   <td class="index-col">{{ i + 1 }}</td>
-                  <td class="word-col">{{ kw.get('word')?.value }}</td>
+                  <td class="word-col">
+                    <div class="word-with-audio">
+                      <span>{{ kw.get('word')?.value }}</span>
+                      <button *ngIf="kw.get('audio')?.value" type="button" class="inline-play-btn" (click)="playKeywordAudio(i)" title="Listen">🔊</button>
+                    </div>
+                  </td>
                   <td><span class="phonetic-badge">{{ kw.get('phonetic')?.value || '-' }}</span></td>
                   <td class="translation-col">{{ kw.get('translation')?.value }}</td>
                   <td>
@@ -281,6 +286,29 @@ import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 
     .index-col { font-weight: 700; color: #64748b; font-family: monospace; }
     .word-col { font-weight: 700; color: #1e293b; font-size: 15px; }
+
+    .word-with-audio {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .inline-play-btn {
+      background: none;
+      border: none;
+      font-size: 14px;
+      cursor: pointer;
+      opacity: 0.6;
+      transition: all 0.2s;
+      padding: 2px;
+      border-radius: 4px;
+      
+      &:hover {
+        opacity: 1;
+        background: #e2e8f0;
+        transform: scale(1.2);
+      }
+    }
     .phonetic-badge { background: #e2e8f0; color: #475569; padding: 4px 8px; border-radius: 6px; font-size: 13px; font-family: monospace; }
     .translation-col { color: #64748b; font-size: 14px; }
     
