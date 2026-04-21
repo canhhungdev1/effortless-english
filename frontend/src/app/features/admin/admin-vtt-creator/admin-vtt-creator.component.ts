@@ -446,7 +446,7 @@ export class AdminVttCreatorComponent implements AfterViewInit, OnDestroy {
     if (!this.rawText) return;
     
     const sentences = this.rawText
-      .split(/(?<=[.!?])\s+|\n+/)
+      .split(/\n+/)
       .map(s => s.trim())
       .filter(s => s.length > 0);
 
