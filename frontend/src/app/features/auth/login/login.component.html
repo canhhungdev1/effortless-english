@@ -1,0 +1,50 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="logo">
+        <i class="fi fi-rr-graduation-cap"></i>
+        <span>Effortless English</span>
+      </div>
+      <h2>Welcome Back</h2>
+      <p>Log in to continue your learning journey.</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="auth-form">
+      <div class="form-group" [class.error]="loginForm.controls.email.invalid && loginForm.controls.email.touched">
+        <label for="email">Email</label>
+        <div class="input-wrapper">
+          <i class="fi fi-rr-envelope"></i>
+          <input type="email" id="email" formControlName="email" placeholder="you@example.com">
+        </div>
+        <div class="error-message" *ngIf="loginForm.controls.email.invalid && loginForm.controls.email.touched">
+          Please enter a valid email address.
+        </div>
+      </div>
+
+      <div class="form-group" [class.error]="loginForm.controls.password.invalid && loginForm.controls.password.touched">
+        <label for="password">Password</label>
+        <div class="input-wrapper">
+          <i class="fi fi-rr-lock"></i>
+          <input type="password" id="password" formControlName="password" placeholder="••••••••">
+        </div>
+        <div class="error-message" *ngIf="loginForm.controls.password.invalid && loginForm.controls.password.touched">
+          Password must be at least 6 characters.
+        </div>
+      </div>
+
+      <div class="global-error" *ngIf="errorMessage">
+        <i class="fi fi-rr-exclamation"></i>
+        {{ errorMessage }}
+      </div>
+
+      <button type="submit" class="btn-primary auth-submit" [disabled]="isLoading">
+        <span *ngIf="!isLoading">Log In</span>
+        <div class="spinner" *ngIf="isLoading"></div>
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      <p>Don't have an account? <a routerLink="/register">Sign up</a></p>
+    </div>
+  </div>
+</div>

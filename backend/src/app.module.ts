@@ -11,7 +11,8 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { FlashcardsModule } from './flashcards/flashcards.module';
 import { MediaModule } from './media/media.module';
-
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -22,6 +23,8 @@ import { MediaModule } from './media/media.module';
     UploadModule,
     FlashcardsModule,
     MediaModule,
+    UsersModule,
+    AuthModule,
 
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', 'public'),

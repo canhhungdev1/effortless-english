@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { RouterLink, RouterOutlet, RouterLinkActive } from '@angular/router';
 import { ToastComponent } from '../../../shared/components/toast/toast.component';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
+import { AuthService } from '../../../core/auth/auth.service';
+import { inject } from '@angular/core';
 
 
 @Component({
@@ -43,11 +45,11 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
         </nav>
 
         <div class="sidebar-footer">
-          <div class="user-info">
-            <div class="avatar">AD</div>
+          <div class="user-info" *ngIf="authService.userSignal() as user">
+            <div class="avatar">{{ user.name.charAt(0).toUpperCase() }}</div>
             <div class="details" *ngIf="!isSidebarCollapsed()">
-              <span class="name">Administrator</span>
-              <span class="role">Project Owner</span>
+              <span class="name">{{ user.name }}</span>
+              <span class="role">{{ user.role }}</span>
             </div>
           </div>
         </div>
@@ -66,7 +68,7 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
             <button class="action-btn notification">
               <span class="icon">🔔</span>
             </button>
-            <button class="action-btn logout">
+            <button class="action-btn logout" (click)="logout()">
               <span class="icon">🔒</span>
               Logout
             </button>
@@ -315,10 +317,17 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
   `]
 })
 export class AdminLayoutComponent {
+  authService = inject(AuthService);
   isSidebarCollapsed = signal(false);
 
   toggleSidebar() {
     this.isSidebarCollapsed.update(v => !v);
+  }
+
+  logout() {
+    if (confirm('Are you sure you want to logout?')) {
+      this.authService.logout();
+    }
   }
 }
 

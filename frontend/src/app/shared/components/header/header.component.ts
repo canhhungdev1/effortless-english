@@ -1,11 +1,13 @@
-import { Component, Output, EventEmitter } from '@angular/core';
+import { Component, Output, EventEmitter, inject } from '@angular/core';
 import { ThemeService } from '../../../core/services/theme.service';
 import { CommonModule } from '@angular/common';
+import { AuthService } from '../../../core/auth/auth.service';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   template: `
     <header class="header">
       <div class="header-left">
@@ -36,15 +38,33 @@ import { CommonModule } from '@angular/common';
         <button class="notification-btn">
           <span class="notification-dot">🔔</span>
         </button>
-        <div class="avatar">
-          <div class="avatar-img">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-              <circle cx="16" cy="16" r="16" fill="var(--bg-gray)"/>
-              <circle cx="16" cy="13" r="5" fill="var(--text-muted)"/>
-              <path d="M6 28C6 22 10 19 16 19C22 19 26 22 26 28" fill="var(--text-muted)"/>
-            </svg>
+
+        <ng-container *ngIf="authService.userSignal() as user; else loginBtn">
+          <div class="user-menu" (click)="toggleDropdown()">
+            <div class="avatar">
+              <div class="avatar-img">
+                <span class="avatar-initial">{{ user.name.charAt(0).toUpperCase() }}</span>
+              </div>
+            </div>
+            <div class="dropdown-menu" *ngIf="showDropdown">
+              <div class="dropdown-header">
+                <strong>{{ user.name }}</strong>
+                <span>{{ user.email }}</span>
+              </div>
+              <div class="dropdown-divider"></div>
+              <a *ngIf="user.role === 'ADMIN'" routerLink="/admin" class="dropdown-item">
+                Admin Panel
+              </a>
+              <button class="dropdown-item" (click)="logout()">
+                Log out
+              </button>
+            </div>
           </div>
-        </div>
+        </ng-container>
+        
+        <ng-template #loginBtn>
+          <a routerLink="/login" class="login-btn">Log In</a>
+        </ng-template>
       </div>
     </header>
   `,
@@ -159,7 +179,6 @@ import { CommonModule } from '@angular/common';
       border-radius: 50%;
       overflow: hidden;
       border: 2px solid var(--border-color);
-      cursor: pointer;
       transition: border-color 0.2s;
 
       &:hover {
@@ -173,6 +192,84 @@ import { CommonModule } from '@angular/common';
       display: flex;
       align-items: center;
       justify-content: center;
+      background: var(--bg-gray);
+      color: var(--primary);
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    .user-menu {
+      position: relative;
+      cursor: pointer;
+    }
+
+    .dropdown-menu {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      background: var(--bg-white);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      width: 200px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .dropdown-header {
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-gray);
+
+      strong {
+        font-size: 14px;
+        color: var(--text-primary);
+      }
+
+      span {
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+    }
+
+    .dropdown-divider {
+      height: 1px;
+      background: var(--border-color);
+    }
+
+    .dropdown-item {
+      padding: 12px 16px;
+      text-align: left;
+      background: transparent;
+      border: none;
+      font-size: 14px;
+      color: var(--text-primary);
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s;
+
+      &:hover {
+        background: var(--bg-gray);
+        color: var(--primary);
+      }
+    }
+
+    .login-btn {
+      padding: 8px 16px;
+      background: var(--primary);
+      color: white;
+      border-radius: var(--radius-md);
+      font-weight: 500;
+      text-decoration: none;
+      font-size: 14px;
+      transition: background 0.2s;
+
+      &:hover {
+        background: var(--primary-dark);
+      }
     }
 
     @media (max-width: 1024px) {
@@ -210,5 +307,16 @@ import { CommonModule } from '@angular/common';
 })
 export class HeaderComponent {
   @Output() toggleSidebar = new EventEmitter<void>();
-  constructor(public themeService: ThemeService) {}
+  authService = inject(AuthService);
+  themeService = inject(ThemeService);
+  showDropdown = false;
+
+  toggleDropdown() {
+    this.showDropdown = !this.showDropdown;
+  }
+
+  logout() {
+    this.authService.logout();
+    this.showDropdown = false;
+  }
 }

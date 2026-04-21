@@ -1,7 +1,18 @@
 import { Routes } from '@angular/router';
 import { MainLayoutComponent } from './shared/layouts/main-layout/main-layout.component';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
+  {
+    path: 'login',
+    loadComponent: () =>
+      import('./features/auth/login/login.component').then(m => m.LoginComponent)
+  },
+  {
+    path: 'register',
+    loadComponent: () =>
+      import('./features/auth/register/register.component').then(m => m.RegisterComponent)
+  },
   {
     path: '',
     component: MainLayoutComponent,
@@ -30,6 +41,8 @@ export const routes: Routes = [
   },
   {
     path: 'admin',
+    canActivate: [authGuard],
+    data: { requiresAdmin: true },
     loadComponent: () => 
       import('./features/admin/layout/admin-layout.component').then(m => m.AdminLayoutComponent),
     children: [

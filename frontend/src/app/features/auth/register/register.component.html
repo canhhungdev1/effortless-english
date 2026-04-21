@@ -1,0 +1,72 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="logo">
+        <i class="fi fi-rr-graduation-cap"></i>
+        <span>Effortless English</span>
+      </div>
+      <h2>Create an Account</h2>
+      <p>Start your journey to fluent English today.</p>
+    </div>
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="auth-form">
+      <div class="form-group" [class.error]="registerForm.controls.name.invalid && registerForm.controls.name.touched">
+        <label for="name">Full Name</label>
+        <div class="input-wrapper">
+          <i class="fi fi-rr-user"></i>
+          <input type="text" id="name" formControlName="name" placeholder="John Doe">
+        </div>
+        <div class="error-message" *ngIf="registerForm.controls.name.invalid && registerForm.controls.name.touched">
+          Please enter your name.
+        </div>
+      </div>
+
+      <div class="form-group" [class.error]="registerForm.controls.email.invalid && registerForm.controls.email.touched">
+        <label for="email">Email</label>
+        <div class="input-wrapper">
+          <i class="fi fi-rr-envelope"></i>
+          <input type="email" id="email" formControlName="email" placeholder="you@example.com">
+        </div>
+        <div class="error-message" *ngIf="registerForm.controls.email.invalid && registerForm.controls.email.touched">
+          Please enter a valid email address.
+        </div>
+      </div>
+
+      <div class="form-group" [class.error]="registerForm.controls.password.invalid && registerForm.controls.password.touched">
+        <label for="password">Password</label>
+        <div class="input-wrapper">
+          <i class="fi fi-rr-lock"></i>
+          <input type="password" id="password" formControlName="password" placeholder="••••••••">
+        </div>
+        <div class="error-message" *ngIf="registerForm.controls.password.invalid && registerForm.controls.password.touched">
+          Password must be at least 6 characters.
+        </div>
+      </div>
+
+      <div class="form-group" [class.error]="registerForm.controls.confirmPassword.touched && registerForm.hasError('mismatch')">
+        <label for="confirmPassword">Confirm Password</label>
+        <div class="input-wrapper">
+          <i class="fi fi-rr-lock"></i>
+          <input type="password" id="confirmPassword" formControlName="confirmPassword" placeholder="••••••••">
+        </div>
+        <div class="error-message" *ngIf="registerForm.controls.confirmPassword.touched && registerForm.hasError('mismatch')">
+          Passwords do not match.
+        </div>
+      </div>
+
+      <div class="global-error" *ngIf="errorMessage">
+        <i class="fi fi-rr-exclamation"></i>
+        {{ errorMessage }}
+      </div>
+
+      <button type="submit" class="btn-primary auth-submit" [disabled]="isLoading">
+        <span *ngIf="!isLoading">Create Account</span>
+        <div class="spinner" *ngIf="isLoading"></div>
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      <p>Already have an account? <a routerLink="/login">Log in</a></p>
+    </div>
+  </div>
+</div>
