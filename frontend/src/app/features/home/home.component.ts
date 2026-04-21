@@ -2,6 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { CourseService } from '../../core/services/course.service';
+import { AuthService } from '../../core/auth/auth.service';
 import { Course } from '../../core/models/course.model';
 import { FlashcardSessionComponent } from '../../shared/components/flashcards/flashcard-session.component';
 
@@ -256,14 +257,19 @@ export class HomeComponent implements OnInit {
   dueCount = signal(0);
   showReview = signal(false);
 
-  constructor(private courseService: CourseService) {}
+  constructor(
+    private courseService: CourseService,
+    private authService: AuthService
+  ) {}
 
   ngOnInit() {
     this.courseService.getCourses().subscribe(courses => {
       this.courses.set(courses);
     });
 
-    this.loadDueFlashcards();
+    if (this.authService.isLoggedIn()) {
+      this.loadDueFlashcards();
+    }
   }
 
   loadDueFlashcards() {

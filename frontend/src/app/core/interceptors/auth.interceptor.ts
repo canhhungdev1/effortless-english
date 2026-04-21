@@ -23,7 +23,8 @@ export const authInterceptor: HttpInterceptorFn = (
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
       // Handle 401 Unauthorized errors (e.g., token expired)
-      if (error.status === 401) {
+      // Only redirect if there was an attempt to use a token
+      if (error.status === 401 && token) {
         authService.logout();
         router.navigate(['/login']);
       }
