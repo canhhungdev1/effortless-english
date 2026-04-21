@@ -64,7 +64,16 @@ export class MediaService {
       if (fs.statSync(fullPath).isDirectory()) {
         arrayOfFiles = this.getAllFiles(fullPath, arrayOfFiles, baseDir);
       } else {
-        const relativePath = fullPath.replace(baseDir, '').replace(/\\/g, '/').replace(/^\//, '');
+        // Robust relative path extraction (handles Windows vs Unix slashes and case insensitivity)
+        const normalizedBaseDir = baseDir.replace(/\\/g, '/');
+        const normalizedFullPath = fullPath.replace(/\\/g, '/');
+        
+        let relativePath = normalizedFullPath;
+        if (normalizedFullPath.toLowerCase().startsWith(normalizedBaseDir.toLowerCase())) {
+          relativePath = normalizedFullPath.substring(normalizedBaseDir.length);
+        }
+        relativePath = relativePath.replace(/^\//, '');
+
         const size = fs.statSync(fullPath).size;
         arrayOfFiles.push({ relativePath, size });
       }
@@ -112,6 +121,11 @@ export class MediaService {
       let relativePath = url.substring(index + mediaToken.length);
       // Remove query params if any
       relativePath = relativePath.split('?')[0];
+      try {
+        relativePath = decodeURIComponent(relativePath);
+      } catch (e) {
+        // ignore malformed URI
+      }
       set.add(relativePath);
     }
   }

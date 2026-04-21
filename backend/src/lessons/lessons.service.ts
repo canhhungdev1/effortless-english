@@ -64,6 +64,7 @@ export class LessonsService {
         case 'ARTICLE':
           result.mainArticle = {
             audioUrl: content.audio_url,
+            vttUrl: content.vtt_url,
             englishText: content.content_en,
             vietnameseText: content.content_vi
           };
