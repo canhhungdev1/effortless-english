@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of, tap, switchMap, forkJoin } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { UserVocabulary, VocabularyWord, ReviewRating } from '../models/course.model';
-import { AuthService } from './auth.service';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -20,13 +20,23 @@ export class VocabularyService {
 
   constructor() {
     // Initial load based on auth state
-    this.auth.user$.subscribe(user => {
-      this.refreshVocabulary();
+    this.auth.currentUser$.subscribe((user: any) => {
+      if (user) {
+        // Automatically sync local guest data if it exists when user logs in
+        this.syncToCloud().pipe(
+          switchMap(() => {
+            this.refreshVocabulary();
+            return of(null);
+          })
+        ).subscribe();
+      } else {
+        this.refreshVocabulary();
+      }
     });
   }
 
   refreshVocabulary() {
-    if (this.auth.isLoggedIn) {
+    if (this.auth.isLoggedIn()) {
       this.http.get<UserVocabulary[]>(`${this.apiUrl}/all`).subscribe(data => {
         this.vocabSubject.next(data);
       });
@@ -37,7 +47,7 @@ export class VocabularyService {
   }
 
   addWord(word: VocabularyWord): Observable<any> {
-    if (this.auth.isLoggedIn) {
+    if (this.auth.isLoggedIn()) {
       return this.http.post(`${this.apiUrl}/add`, word).pipe(
         tap(() => this.refreshVocabulary())
       );
@@ -63,7 +73,7 @@ export class VocabularyService {
   }
 
   toggleFavorite(word: VocabularyWord): Observable<any> {
-    if (this.auth.isLoggedIn) {
+    if (this.auth.isLoggedIn()) {
       return this.http.post(`${this.apiUrl}/toggle-favorite`, word).pipe(
         tap(() => this.refreshVocabulary())
       );
@@ -98,7 +108,7 @@ export class VocabularyService {
   }
 
   deleteWord(id: string): Observable<any> {
-    if (this.auth.isLoggedIn) {
+    if (this.auth.isLoggedIn()) {
       return this.http.delete(`${this.apiUrl}/${id}`).pipe(
         tap(() => this.refreshVocabulary())
       );
@@ -111,7 +121,7 @@ export class VocabularyService {
   }
 
   updateWord(id: string, data: Partial<VocabularyWord>): Observable<any> {
-    if (this.auth.isLoggedIn) {
+    if (this.auth.isLoggedIn()) {
       return this.http.patch(`${this.apiUrl}/${id}`, data).pipe(
         tap(() => this.refreshVocabulary())
       );
@@ -126,7 +136,7 @@ export class VocabularyService {
   }
 
   reviewWord(id: string, rating: ReviewRating): Observable<any> {
-    if (this.auth.isLoggedIn) {
+    if (this.auth.isLoggedIn()) {
       return this.http.patch(`${this.apiUrl}/review/${id}`, { rating }).pipe(
         tap(() => this.refreshVocabulary())
       );
@@ -150,11 +160,10 @@ export class VocabularyService {
 
   syncToCloud(): Observable<any> {
     const localData = this.getLocalVocab();
-    if (localData.length === 0 || !this.auth.isLoggedIn) return of(null);
+    if (localData.length === 0 || !this.auth.isLoggedIn()) return of(null);
 
-    // Send all local words to backend
-    const requests = localData.map(word => this.http.post(`${this.apiUrl}/add`, word));
-    return forkJoin(requests).pipe(
+    // Send all local words to backend in a single sync request
+    return this.http.post(`${this.apiUrl}/sync`, localData).pipe(
       tap(() => {
         localStorage.removeItem(this.LOCAL_STORAGE_KEY);
         this.refreshVocabulary();

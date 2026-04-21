@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { VocabularyService } from '../../core/services/vocabulary.service';
-import { AuthService } from '../../core/services/auth.service';
+import { AuthService } from '../../core/auth/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { UserVocabulary } from '../../core/models/course.model';
 import { map, combineLatest, startWith } from 'rxjs';
@@ -27,13 +27,13 @@ import { FlashcardSessionComponent } from '../../shared/components/flashcards/fl
             Study Now
           </button>
           
-          <div class="guest-mode-actions" *ngIf="!auth.isLoggedIn && allVocab.length > 0">
+          <div class="guest-mode-actions" *ngIf="!auth.isLoggedIn() && allVocab.length > 0">
             <div class="guest-warning">
               <span class="icon">⚠️</span>
               <span>Guest Mode: Words are saved locally.</span>
             </div>
             <div class="action-buttons">
-              <button class="sync-link" (click)="auth.signInWithGoogle()">Login to Sync</button>
+              <a routerLink="/login" class="sync-link">Login to Sync</a>
               <button class="clear-btn" (click)="clearAll()">Clear All</button>
             </div>
           </div>

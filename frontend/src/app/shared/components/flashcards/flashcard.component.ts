@@ -67,7 +67,7 @@ import { VocabularyWord } from '../../../core/models/course.model';
       position: relative;
       width: 100%;
       height: 100%;
-      transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
       transform-style: preserve-3d;
     }
 
@@ -260,7 +260,9 @@ export class FlashcardComponent {
   reset() {
     this.isFlipped = false;
     this.flipped.emit(false);
-    // Auto speak when a new card is shown
-    setTimeout(() => this.speak(), 500);
+    // Auto speak when a new card is shown after a short delay
+    setTimeout(() => {
+      this.speak();
+    }, 400);
   }
 }

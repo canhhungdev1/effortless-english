@@ -23,6 +23,8 @@ export class FlashcardsService {
   }
 
   async addToFlashcards(userId: string, data: any) {
+    const nextReview = data.next_review ? new Date(data.next_review) : new Date();
+    
     return this.prisma.userVocabulary.upsert({
       where: { user_id_word: { user_id: userId, word: data.word } },
       update: {
@@ -31,7 +33,7 @@ export class FlashcardsService {
         audio: data.audio,
         example: data.example,
         is_favorite: data.is_favorite ?? true,
-        next_review: new Date() // Reset to study immediately
+        next_review: nextReview
       },
       create: {
         user_id: userId,
@@ -40,9 +42,20 @@ export class FlashcardsService {
         phonetic: data.phonetic,
         audio: data.audio,
         example: data.example,
-        is_favorite: data.is_favorite ?? true
+        is_favorite: data.is_favorite ?? true,
+        next_review: nextReview
       }
     });
+  }
+
+  async syncFlashcards(userId: string, words: any[]) {
+    // Perform bulk upserts
+    const results: any[] = [];
+    for (const data of words) {
+      const result = await this.addToFlashcards(userId, data);
+      results.push(result);
+    }
+    return results;
   }
 
   async toggleFavorite(userId: string, data: any) {

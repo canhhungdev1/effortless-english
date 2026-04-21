@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, ViewChild, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { VocabularyWord } from '../../../core/models/course.model';
 import { FlashcardComponent } from './flashcard.component';
@@ -33,11 +33,13 @@ import { VocabularyService } from '../../../core/services/vocabulary.service';
 
         <!-- Card Area -->
         <div class="card-area">
-          <app-flashcard 
-            #cardRef
-            *ngIf="shuffledDeck.length > 0 && !isFinished" 
-            [data]="shuffledDeck[currentIndex]"
-            (flipped)="onCardFlipped($event)" />
+          <div class="card-wrapper" [class.exit]="isTransitioning" [class.enter]="!isTransitioning && !isFinished">
+            <app-flashcard 
+              #cardRef
+              *ngIf="shuffledDeck.length > 0 && !isFinished" 
+              [data]="shuffledDeck[currentIndex]"
+              (flipped)="onCardFlipped($event)" />
+          </div>
             
           <div class="finish-screen" *ngIf="isFinished">
             <div class="finish-icon">🏆</div>
@@ -112,6 +114,27 @@ import { VocabularyService } from '../../../core/services/vocabulary.service';
     .card-area { 
       padding: 40px 32px; min-height: 480px; display: flex; align-items: center; justify-content: center;
       background: radial-gradient(circle at center, #ffffff 0%, #f1f2f6 100%);
+      position: relative; overflow: hidden;
+    }
+
+    .card-wrapper {
+      width: 100%; display: flex; justify-content: center;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .card-wrapper.exit {
+      transform: translateY(-30px) scale(0.95);
+      opacity: 0;
+      filter: blur(8px);
+    }
+
+    .card-wrapper.enter {
+      animation: cardEnter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    @keyframes cardEnter {
+      from { transform: translateY(40px) scale(0.9); opacity: 0; filter: blur(10px); }
+      to { transform: translateY(0) scale(1); opacity: 1; filter: blur(0); }
     }
 
     .session-footer {
@@ -173,9 +196,12 @@ export class FlashcardSessionComponent implements OnInit {
   currentIndex = 0;
   isFinished = false;
   isRevealed = false;
+  isTransitioning = false;
 
   private successSound = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
   private clickSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3');
+
+  private cdr = inject(ChangeDetectorRef);
 
   constructor(private vocabService: VocabularyService) {}
 
@@ -192,6 +218,8 @@ export class FlashcardSessionComponent implements OnInit {
   }
 
   onRate(rating: number) {
+    if (this.isTransitioning) return;
+
     // Play click sound
     this.clickSound.currentTime = 0;
     this.clickSound.play().catch(() => {});
@@ -202,7 +230,19 @@ export class FlashcardSessionComponent implements OnInit {
       this.vocabService.reviewWord(currentWord.id, rating as any).subscribe();
     }
 
-    this.nextCard();
+    // Start transition
+    this.isTransitioning = true;
+    this.cdr.detectChanges();
+    
+    setTimeout(() => {
+      this.nextCard();
+      this.cdr.detectChanges();
+      
+      setTimeout(() => {
+        this.isTransitioning = false;
+        this.cdr.detectChanges();
+      }, 50); // Small delay to trigger Enter animation
+    }, 350); // Matches CSS exit duration
   }
 
   nextCard() {
