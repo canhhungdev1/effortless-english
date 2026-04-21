@@ -59,8 +59,12 @@ import { inject } from '@angular/core';
       <main class="main-content">
         <header class="top-bar">
           <div class="top-bar-left">
-            <button class="toggle-btn" (click)="toggleSidebar()">
-              <span class="icon">{{ isSidebarCollapsed() ? '➡️' : '⬅️' }}</span>
+            <button class="hamburger-btn" (click)="toggleSidebar()">
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="currentColor">
+                <rect x="3" y="5" width="16" height="2" rx="1"/>
+                <rect x="3" y="10" width="16" height="2" rx="1"/>
+                <rect x="3" y="15" width="16" height="2" rx="1"/>
+              </svg>
             </button>
             <h2 class="page-title">Admin Dashboard</h2>
           </div>
@@ -253,19 +257,23 @@ import { inject } from '@angular/core';
       gap: 20px;
     }
 
-    .toggle-btn {
-      width: 36px;
-      height: 36px;
-      border: 1px solid #e2e8f0;
-      background: #f8fafc;
-      border-radius: 8px;
+    .hamburger-btn {
       display: flex;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
+      color: #1e293b;
+      flex-shrink: 0;
       transition: all 0.2s;
-      font-size: 14px;
-      &:hover { background: #f1f5f9; border-color: #cbd5e1; }
+      cursor: pointer;
+      background: transparent;
+      border: none;
+
+      &:hover {
+        background: #f1f5f9;
+      }
     }
 
 

@@ -39,8 +39,12 @@ import { CourseService } from '../../../core/services/course.service';
             <td><code>{{ story.audioUrl || 'No audio' }}</code></td>
             <td>
               <div class="actions">
-                <button (click)="editStory(story)" class="action-icon edit" title="Edit">✏️</button>
-                <button (click)="deleteStory(story)" class="action-icon delete" title="Delete">🗑️</button>
+                <button (click)="editStory(story)" class="action-icon edit" title="Edit">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 18px; height: 18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.89 1.14l-2.8.93a.75.75 0 01-.95-.95l.93-2.8a4.5 4.5 0 011.14-1.89l8.931-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
+                </button>
+                <button (click)="deleteStory(story)" class="action-icon delete" title="Delete">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 18px; height: 18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
+                </button>
               </div>
             </td>
           </tr>
@@ -75,9 +79,10 @@ import { CourseService } from '../../../core/services/course.service';
     .actions { display: flex; gap: 8px; }
     .action-icon {
       width: 32px; height: 32px; border-radius: 6px; border: 1px solid #e2e8f0; background: white;
-      display: flex; align-items: center; justify-content: center; cursor: pointer;
-      &:hover { background: #f8fafc; }
-      &.delete:hover { border-color: #fecaca; color: var(--primary); }
+      display: flex; align-items: center; justify-content: center; cursor: pointer; color: #64748b; transition: all 0.2s;
+      &:hover { background: #f8fafc; border-color: #cbd5e1; }
+      &.delete:hover { background: #fff1f2; border-color: #fecaca; color: #ef4444; }
+      &.edit:hover { background: #f0fdf4; border-color: #bbf7d0; color: #22c55e; }
     }
 
     .loading-state { padding: 60px; text-align: center; }

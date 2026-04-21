@@ -474,7 +474,7 @@ export class CourseDetailComponent implements OnInit {
   course = signal<Course | undefined>(undefined);
   lessons = signal<Lesson[]>([]);
   
-  pageSize = 10;
+  pageSize = 5;
   visibleCount = signal(this.pageSize);
 
   displayedLessons = computed(() => {
