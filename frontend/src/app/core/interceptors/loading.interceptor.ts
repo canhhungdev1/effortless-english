@@ -1,19 +1,25 @@
-import { HttpInterceptorFn } from '@angular/common/http';
+import { HttpInterceptorFn, HttpContextToken } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { finalize } from 'rxjs';
 import { LoadingService } from '../services/loading.service';
 
+export const SKIP_LOADING = new HttpContextToken<boolean>(() => false);
+
 export const loadingInterceptor: HttpInterceptorFn = (req, next) => {
   const loadingService = inject(LoadingService);
   
-  // Optional: Add logic to skip loading for certain requests
-  // if (req.headers.has('X-Skip-Loading')) { ... }
+  // Check HttpContext for skip loading flag
+  const skipLoading = req.context.get(SKIP_LOADING);
 
-  loadingService.show();
+  if (!skipLoading) {
+    loadingService.show();
+  }
 
   return next(req).pipe(
     finalize(() => {
-      loadingService.hide();
+      if (!skipLoading) {
+        loadingService.hide();
+      }
     })
   );
 };

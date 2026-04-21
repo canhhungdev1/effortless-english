@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { BehaviorSubject, Observable, of, tap, switchMap, forkJoin } from 'rxjs';
+import { SKIP_LOADING } from '../interceptors/loading.interceptor';
 import { environment } from '../../../environments/environment';
 import { UserVocabulary, VocabularyWord, ReviewRating } from '../models/course.model';
 import { AuthService } from '../auth/auth.service';
@@ -35,9 +36,10 @@ export class VocabularyService {
     });
   }
 
-  refreshVocabulary() {
+  refreshVocabulary(skipLoading: boolean = false) {
     if (this.auth.isLoggedIn()) {
-      this.http.get<UserVocabulary[]>(`${this.apiUrl}/all`).subscribe(data => {
+      const context = skipLoading ? new HttpContext().set(SKIP_LOADING, true) : new HttpContext();
+      this.http.get<UserVocabulary[]>(`${this.apiUrl}/all`, { context }).subscribe(data => {
         this.vocabSubject.next(data);
       });
     } else {
@@ -48,8 +50,10 @@ export class VocabularyService {
 
   addWord(word: VocabularyWord): Observable<any> {
     if (this.auth.isLoggedIn()) {
-      return this.http.post(`${this.apiUrl}/add`, word).pipe(
-        tap(() => this.refreshVocabulary())
+      return this.http.post(`${this.apiUrl}/add`, word, {
+        context: new HttpContext().set(SKIP_LOADING, true)
+      }).pipe(
+        tap(() => this.refreshVocabulary(true))
       );
     } else {
       const localData = this.getLocalVocab();
@@ -137,8 +141,10 @@ export class VocabularyService {
 
   reviewWord(id: string, rating: ReviewRating): Observable<any> {
     if (this.auth.isLoggedIn()) {
-      return this.http.patch(`${this.apiUrl}/review/${id}`, { rating }).pipe(
-        tap(() => this.refreshVocabulary())
+      return this.http.patch(`${this.apiUrl}/review/${id}`, { rating }, {
+        context: new HttpContext().set(SKIP_LOADING, true)
+      }).pipe(
+        tap(() => this.refreshVocabulary(true))
       );
     } else {
       // Simple SM-2 implementation for LocalStorage

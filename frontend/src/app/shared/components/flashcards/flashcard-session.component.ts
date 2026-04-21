@@ -123,9 +123,9 @@ import { VocabularyService } from '../../../core/services/vocabulary.service';
     }
 
     .card-wrapper.exit {
-      transform: translateY(-30px) scale(0.95);
+      transform: translateX(150%) rotate(15deg);
       opacity: 0;
-      filter: blur(8px);
+      filter: blur(4px);
     }
 
     .card-wrapper.enter {
