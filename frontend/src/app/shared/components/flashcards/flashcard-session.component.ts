@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { VocabularyWord } from '../../../core/models/course.model';
 import { FlashcardComponent } from './flashcard.component';
 import { VocabularyService } from '../../../core/services/vocabulary.service';
+import confetti from 'canvas-confetti';
 
 @Component({
   selector: 'app-flashcard-session',
@@ -10,12 +11,12 @@ import { VocabularyService } from '../../../core/services/vocabulary.service';
   imports: [CommonModule, FlashcardComponent],
   template: `
     <div class="flashcard-overlay">
-      <div class="session-container">
+      <div class="session-container" [class.summary-mode]="isFinished">
         <!-- Header -->
         <div class="session-header">
           <div class="header-left">
-            <h2 class="session-title">Flashcard Study</h2>
-            <div class="progress-info">
+            <h2 class="session-title">{{ isFinished ? 'Session Summary' : 'Flashcard Study' }}</h2>
+            <div class="progress-info" *ngIf="!isFinished">
               Word {{ currentIndex + 1 }} of {{ shuffledDeck.length }}
             </div>
           </div>
@@ -27,26 +28,55 @@ import { VocabularyService } from '../../../core/services/vocabulary.service';
         </div>
 
         <!-- Progress Bar -->
-        <div class="progress-container">
+        <div class="progress-container" *ngIf="!isFinished">
           <div class="progress-bar" [style.width.%]="progress"></div>
         </div>
 
         <!-- Card Area -->
         <div class="card-area">
-          <div class="card-wrapper" [class.exit]="isTransitioning" [class.enter]="!isTransitioning && !isFinished">
+          <div class="card-wrapper" *ngIf="!isFinished" [class.exit]="isTransitioning" [class.enter]="!isTransitioning">
             <app-flashcard 
               #cardRef
-              *ngIf="shuffledDeck.length > 0 && !isFinished" 
+              *ngIf="shuffledDeck.length > 0" 
               [data]="shuffledDeck[currentIndex]"
               (flipped)="onCardFlipped($event)" />
           </div>
             
           <div class="finish-screen" *ngIf="isFinished">
-            <div class="finish-icon">🏆</div>
-            <h2>Session Complete!</h2>
-            <p>You've reviewed all {{ shuffledDeck.length }} words.</p>
-            <button class="primary-btn" (click)="onClose()">Finish & Exit</button>
-            <button class="secondary-btn" (click)="restart()">Review Again</button>
+            <div class="celebration-icon">🏆</div>
+            <h2 class="finish-title">Session Complete!</h2>
+            <p class="finish-subtitle">Fantastic work! You've successfully reviewed <strong>{{ shuffledDeck.length }}</strong> words.</p>
+            
+            <div class="summary-stats">
+              <div class="summary-item excellent">
+                <span class="count">{{ sessionSummary.easy }}</span>
+                <span class="label">Easy</span>
+              </div>
+              <div class="summary-item good">
+                <span class="count">{{ sessionSummary.good }}</span>
+                <span class="label">Good</span>
+              </div>
+              <div class="summary-item hard">
+                <span class="count">{{ sessionSummary.hard }}</span>
+                <span class="label">Hard</span>
+              </div>
+              <div class="summary-item again">
+                <span class="count">{{ sessionSummary.again }}</span>
+                <span class="label">Again</span>
+              </div>
+            </div>
+
+            <div class="mastery-score">
+               <div class="score-circle">
+                 <span class="percentage">{{ masteryPercentage }}%</span>
+                 <span class="score-label">Accuracy</span>
+               </div>
+            </div>
+
+            <div class="finish-actions">
+              <button class="primary-btn finish-btn" (click)="onClose()">Finish & Exit</button>
+              <button class="secondary-btn" (click)="restart()">Practice Again</button>
+            </div>
           </div>
         </div>
 
@@ -91,7 +121,9 @@ import { VocabularyService } from '../../../core/services/vocabulary.service';
       border-radius: 32px; overflow: hidden; display: flex;
       flex-direction: column; box-shadow: 0 40px 100px rgba(0,0,0,0.6);
       border: 1px solid rgba(255,255,255,0.1);
+      transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
+    .session-container.summary-mode { max-width: 500px; }
 
     .session-header { 
       padding: 24px 32px; display: flex; align-items: center; justify-content: space-between; 
@@ -121,16 +153,8 @@ import { VocabularyService } from '../../../core/services/vocabulary.service';
       width: 100%; display: flex; justify-content: center;
       transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
-
-    .card-wrapper.exit {
-      transform: translateX(150%) rotate(15deg);
-      opacity: 0;
-      filter: blur(4px);
-    }
-
-    .card-wrapper.enter {
-      animation: cardEnter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-    }
+    .card-wrapper.exit { transform: translateX(150%) rotate(15deg); opacity: 0; filter: blur(4px); }
+    .card-wrapper.enter { animation: cardEnter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
 
     @keyframes cardEnter {
       from { transform: translateY(40px) scale(0.9); opacity: 0; filter: blur(10px); }
@@ -155,10 +179,8 @@ import { VocabularyService } from '../../../core/services/vocabulary.service';
       display: flex; flex-direction: column; align-items: center; gap: 6px;
       padding: 16px 8px; border: 2px solid #eee; border-radius: 20px;
       background: white; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      
       .btn-label { font-weight: 800; font-size: 15px; text-transform: uppercase; }
       .btn-time { font-size: 12px; font-weight: 600; color: var(--text-muted); }
-
       &:hover { transform: translateY(-8px); border-color: currentColor; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
       &.again { color: #ff4757; &:hover { background: #fff5f5; } }
       &.hard { color: #ffa502; &:hover { background: #fffaf0; } }
@@ -166,25 +188,44 @@ import { VocabularyService } from '../../../core/services/vocabulary.service';
       &.easy { color: #2ecc71; &:hover { background: #f2fff7; } }
     }
 
-    .primary-btn {
-      padding: 16px 48px; font-size: 16px; font-weight: 800; background: var(--primary);
-      color: white; border-radius: 20px; transition: all 0.3s;
-      box-shadow: 0 10px 25px rgba(229, 57, 53, 0.3);
-      &:hover { transform: scale(1.05); box-shadow: 0 15px 35px rgba(229, 57, 53, 0.4); }
-    }
-
-    .secondary-btn { 
-      padding: 12px 24px; font-size: 15px; font-weight: 700; color: #636e72; 
-      margin-top: 16px; transition: color 0.2s;
-      &:hover { color: var(--primary); text-decoration: none; } 
-    }
-
+    /* Finish Screen Styles */
     .finish-screen { 
-      text-align: center; display: flex; flex-direction: column; align-items: center; gap: 16px; 
-      animation: slideUp 0.6s cubic-bezier(0.23, 1, 0.32, 1); 
+      text-align: center; display: flex; flex-direction: column; align-items: center; gap: 24px; 
+      animation: slideUp 0.6s cubic-bezier(0.23, 1, 0.32, 1); width: 100%;
     }
+    .celebration-icon { font-size: 72px; animation: scaleUp 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    @keyframes scaleUp { from { transform: scale(0); } to { transform: scale(1); } }
+    
+    .finish-title { font-size: 28px; font-weight: 850; color: #1e293b; margin: 0; }
+    .finish-subtitle { font-size: 16px; color: #64748b; margin-top: -8px; }
+    
+    .summary-stats { 
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; width: 100%; 
+      margin: 10px 0;
+    }
+    .summary-item {
+      padding: 16px 8px; border-radius: 16px; display: flex; flex-direction: column; gap: 4px;
+      .count { font-size: 22px; font-weight: 800; }
+      .label { font-size: 11px; font-weight: 700; text-transform: uppercase; opacity: 0.8; }
+      &.excellent { background: #ecfdf5; color: #059669; }
+      &.good { background: #eff6ff; color: #2563eb; }
+      &.hard { background: #fffbeb; color: #d97706; }
+      &.again { background: #fef2f2; color: #dc2626; }
+    }
+
+    .mastery-score {
+      padding: 20px; background: #f8fafc; border-radius: 100px; width: 140px; height: 140px;
+      display: flex; align-items: center; justify-content: center; border: 8px solid #e2e8f0;
+      .score-circle { display: flex; flex-direction: column; align-items: center; }
+      .percentage { font-size: 32px; font-weight: 900; color: #1e293b; line-height: 1; }
+      .score-label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-top: 4px; }
+    }
+
+    .finish-actions { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+    .primary-btn.finish-btn { width: 100%; padding: 18px; font-size: 17px; box-shadow: 0 10px 30px rgba(var(--primary-rgb), 0.3); }
+    .secondary-btn { background: none; border: none; font-weight: 700; color: #64748b; cursor: pointer; &:hover { color: var(--primary); } }
+
     @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    .finish-icon { font-size: 80px; margin-bottom: 16px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.1)); }
   `]
 })
 export class FlashcardSessionComponent implements OnInit {
@@ -197,6 +238,13 @@ export class FlashcardSessionComponent implements OnInit {
   isFinished = false;
   isRevealed = false;
   isTransitioning = false;
+  
+  sessionSummary = {
+    again: 0,
+    hard: 0,
+    good: 0,
+    easy: 0
+  };
 
   private successSound = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
   private clickSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3');
@@ -213,12 +261,27 @@ export class FlashcardSessionComponent implements OnInit {
     return (this.currentIndex / this.shuffledDeck.length) * 100;
   }
 
+  get masteryPercentage(): number {
+    if (this.shuffledDeck.length === 0) return 0;
+    const totalRated = this.sessionSummary.again + this.sessionSummary.hard + this.sessionSummary.good + this.sessionSummary.easy;
+    if (totalRated === 0) return 0;
+    // Calculation: Easy=100%, Good=80%, Hard=50%, Again=0%
+    const score = (this.sessionSummary.easy * 100) + (this.sessionSummary.good * 80) + (this.sessionSummary.hard * 50);
+    return Math.round(score / totalRated);
+  }
+
   onCardFlipped(flipped: boolean) {
     this.isRevealed = flipped;
   }
 
   onRate(rating: number) {
     if (this.isTransitioning) return;
+
+    // Track for summary
+    if (rating === 0) this.sessionSummary.again++;
+    else if (rating === 1) this.sessionSummary.hard++;
+    else if (rating === 2) this.sessionSummary.good++;
+    else if (rating === 3) this.sessionSummary.easy++;
 
     // Play click sound
     this.clickSound.currentTime = 0;
@@ -228,7 +291,6 @@ export class FlashcardSessionComponent implements OnInit {
     
     this.vocabService.ensureWordAndReview(currentWord, rating as any).subscribe({
       next: (res) => {
-        // If it was a new word, it now has an ID returned from server/local
         if (res && res.id) {
           currentWord.id = res.id;
         }
@@ -246,8 +308,8 @@ export class FlashcardSessionComponent implements OnInit {
       setTimeout(() => {
         this.isTransitioning = false;
         this.cdr.detectChanges();
-      }, 50); // Small delay to trigger Enter animation
-    }, 350); // Matches CSS exit duration
+      }, 50); 
+    }, 350); 
   }
 
   nextCard() {
@@ -256,9 +318,41 @@ export class FlashcardSessionComponent implements OnInit {
       this.isRevealed = false;
       this.cardRef?.reset();
     } else {
-      this.isFinished = true;
-      this.playSuccessSound();
+      this.finishSession();
     }
+  }
+
+  finishSession() {
+    this.isFinished = true;
+    this.playSuccessSound();
+    this.triggerConfetti();
+  }
+
+  triggerConfetti() {
+    const duration = 3 * 1000;
+    const end = Date.now() + duration;
+
+    const frame = () => {
+      confetti({
+        particleCount: 3,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0 },
+        colors: ['#22c55e', '#3b82f6', '#ef4444', '#f59e0b']
+      });
+      confetti({
+        particleCount: 3,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1 },
+        colors: ['#22c55e', '#3b82f6', '#ef4444', '#f59e0b']
+      });
+
+      if (Date.now() < end) {
+        requestAnimationFrame(frame);
+      }
+    };
+    frame();
   }
 
   private playSuccessSound() {
@@ -271,6 +365,7 @@ export class FlashcardSessionComponent implements OnInit {
     this.currentIndex = 0;
     this.isFinished = false;
     this.isRevealed = false;
+    this.sessionSummary = { again: 0, hard: 0, good: 0, easy: 0 };
     this.cardRef?.reset();
   }
 
@@ -278,4 +373,5 @@ export class FlashcardSessionComponent implements OnInit {
     this.close.emit();
   }
 }
+
 

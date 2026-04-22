@@ -28,6 +28,7 @@ model User {
   updated_at DateTime @updatedAt @map("updated_at")
 
   vocabularies UserVocabulary[]
+  review_history ReviewHistory[]
 
   @@map("users")
 }
@@ -106,7 +107,21 @@ model UserVocabulary {
   updated_at      DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  review_history  ReviewHistory[]
 
   @@unique([user_id, word])
   @@map("user_vocabulary")
+}
+
+model ReviewHistory {
+  id              String   @id @default(uuid())
+  user_id         String   @map("user_id")
+  vocabulary_id   String   @map("vocabulary_id")
+  rating          Int      // 0-3 (Again, Hard, Good, Easy)
+  created_at      DateTime @default(now()) @map("created_at")
+
+  user            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  vocabulary      UserVocabulary @relation(fields: [vocabulary_id], references: [id], onDelete: Cascade)
+
+  @@map("review_history")
 }

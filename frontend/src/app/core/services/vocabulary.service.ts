@@ -209,12 +209,10 @@ export class VocabularyService {
 
   getReviewStats(): Observable<any> {
     if (this.auth.isLoggedIn()) {
-      return this.http.get(`${this.apiUrl}/stats`, {
-        context: new HttpContext().set(SKIP_LOADING, true)
-      }).pipe(
+      return this.http.get<any>(`${this.apiUrl}/stats`).pipe(
         tap(stats => this.statsSubject.next(stats)),
-        catchError(() => {
-          // On 401 or any error, push default stats so UI doesn't hang
+        catchError(err => {
+          console.error('Error fetching review stats:', err);
           this.statsSubject.next(this.defaultStats);
           return of(this.defaultStats);
         })
@@ -234,6 +232,16 @@ export class VocabularyService {
     }
   }
 
+  getStudyStats(): Observable<any> {
+    if (!this.auth.isLoggedIn()) return of({ streak: 0, heatmap: [] });
+    return this.http.get<any>(`${this.apiUrl}/study-stats`).pipe(
+      catchError(err => {
+        console.error('Error fetching study stats:', err);
+        return of({ streak: 0, heatmap: [] });
+      })
+    );
+  }
+
   refreshStats() {
     this.getReviewStats().subscribe();
   }
@@ -242,7 +250,6 @@ export class VocabularyService {
     const localData = this.getLocalVocab();
     if (localData.length === 0 || !this.auth.isLoggedIn()) return of(null);
 
-    // Send all local words to backend in a single sync request
     return this.http.post(`${this.apiUrl}/sync`, localData).pipe(
       tap(() => {
         localStorage.removeItem(this.LOCAL_STORAGE_KEY);

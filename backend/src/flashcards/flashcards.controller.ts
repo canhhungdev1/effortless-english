@@ -18,6 +18,11 @@ export class FlashcardsController {
     return this.flashcardsService.getReviewStats(user.id);
   }
 
+  @Get('study-stats')
+  getStudyStats(@CurrentUser() user: any) {
+    return this.flashcardsService.getStudyStats(user.id);
+  }
+
   @Get('all')
   getAll(@CurrentUser() user: any) {
     return this.flashcardsService.getAllWords(user.id);

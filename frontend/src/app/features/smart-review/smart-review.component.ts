@@ -5,12 +5,14 @@ import { VocabularyService } from '../../core/services/vocabulary.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { FlashcardSessionComponent } from '../../shared/components/flashcards/flashcard-session.component';
+import { HeatmapComponent } from '../../shared/components/heatmap/heatmap.component';
 import { map, distinctUntilChanged } from 'rxjs';
+
 
 @Component({
   selector: 'app-smart-review',
   standalone: true,
-  imports: [CommonModule, RouterLink, FlashcardSessionComponent],
+  imports: [CommonModule, RouterLink, FlashcardSessionComponent, HeatmapComponent],
   template: `
     <div class="review-container fade-in" [class.is-loading]="!stats">
       <div class="header-section">
@@ -19,6 +21,13 @@ import { map, distinctUntilChanged } from 'rxjs';
           <p class="subtitle">Optimize your memory using Spaced Repetition (SRS).</p>
         </div>
         <div class="header-actions">
+          <!-- Streak Badge -->
+          <div class="streak-badge" *ngIf="studyStats?.streak > 0" title="Daily Streak">
+             <span class="streak-icon">🔥</span>
+             <span class="streak-count">{{ studyStats.streak }}</span>
+             <span class="streak-label">Days</span>
+           </div>
+
           <button class="secondary-btn manage-btn" routerLink="/flashcards">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
@@ -115,7 +124,7 @@ import { map, distinctUntilChanged } from 'rxjs';
           
           <div class="action-box">
              <div class="due-info" *ngIf="stats.dueCount > 0; else nothingDue">
-                <div class="count-big">{{ stats.dueCount }}</div>
+                <div class="count-big">{{ displayStats.dueCount }}</div>
                 <div class="count-unit">Words waiting for you</div>
                 <button class="primary-btn start-btn" (click)="startReview('due')">
                   Start Learning Now
@@ -152,6 +161,11 @@ import { map, distinctUntilChanged } from 'rxjs';
           </div>
         </div>
       </div>
+
+      <!-- Heatmap Section -->
+      <div class="heatmap-section" *ngIf="studyStats?.heatmap">
+        <app-heatmap [data]="studyStats.heatmap" />
+      </div>
     </div>
 
     <!-- Study Modal -->
@@ -167,6 +181,16 @@ import { map, distinctUntilChanged } from 'rxjs';
     .header-section { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
     .header-actions { display: flex; align-items: center; gap: 12px; }
     
+    .streak-badge {
+      display: flex; align-items: center; gap: 8px; background: #fff7ed;
+      padding: 8px 16px; border-radius: 100px; border: 1px solid #ffedd5;
+      animation: streakPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      .streak-icon { font-size: 20px; }
+      .streak-count { font-size: 18px; font-weight: 800; color: #9a3412; }
+      .streak-label { font-size: 11px; font-weight: 700; color: #9a3412; text-transform: uppercase; margin-top: 2px; }
+    }
+    @keyframes streakPop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
     .manage-btn {
       display: flex; align-items: center; gap: 8px; padding: 10px 18px;
       background: white; border: 1px solid var(--border-color); border-radius: 12px;
@@ -305,6 +329,8 @@ import { map, distinctUntilChanged } from 'rxjs';
     .bar-label { font-size: 11px; font-weight: 700; color: #94a3b8; }
     .forecast-note { font-size: 12px; color: #94a3b8; line-height: 1.5; font-style: italic; }
 
+    .heatmap-section { margin-top: 40px; }
+
     .fade-in { animation: fadeIn 0.5s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -355,6 +381,7 @@ export class SmartReviewComponent implements OnInit {
 
   showStudyModal = false;
   studySessionWords: any[] = [];
+  studyStats: any = null;
   private animationTimer: any;
   private lastTarget: any = null;
 
@@ -372,6 +399,11 @@ export class SmartReviewComponent implements OnInit {
         this.stats = s;
         this.animateStats(s);
       }
+    });
+
+    // Fetch learning history and streaks
+    this.vocabService.getStudyStats().subscribe(stats => {
+      this.studyStats = stats;
     });
 
     // Trigger a data sync immediately
@@ -400,9 +432,10 @@ export class SmartReviewComponent implements OnInit {
       const interval = duration / steps;
       
       let currentStep = 0;
-      const targetDue = target.dueCount;
-      const targetTotal = target.totalCount;
-      const targetMastered = target.masteredCount;
+      const targetDue = target.dueCount || 0;
+      console.log('[SmartReview] Animating Due to:', targetDue);
+      const targetTotal = target.totalCount || 0;
+      const targetMastered = target.masteredCount || 0;
 
       this.animationTimer = setInterval(() => {
         currentStep++;
@@ -435,6 +468,9 @@ export class SmartReviewComponent implements OnInit {
 
   syncData() {
     this.vocabService.refreshVocabulary();
+    this.vocabService.getStudyStats().subscribe(stats => {
+      this.studyStats = stats;
+    });
   }
 
   getBarHeight(count: number): number {

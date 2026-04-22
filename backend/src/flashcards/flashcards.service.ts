@@ -62,6 +62,64 @@ export class FlashcardsService {
     };
   }
 
+  async getStudyStats(userId: string) {
+    const history = await this.prisma.reviewHistory.findMany({
+      where: { user_id: userId },
+      orderBy: { created_at: 'desc' },
+      select: { created_at: true }
+    });
+
+    if (history.length === 0) {
+      return { streak: 0, heatmap: [] };
+    }
+
+    // Extract unique dates (YYYY-MM-DD)
+    const dates = [...new Set(history.map(h => h.created_at.toISOString().split('T')[0]))];
+
+    // Calculate streak
+    let streak = 0;
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+    // Check if user studied today or yesterday to start the streak
+    let checkDateStr = dates.includes(today) ? today : (dates.includes(yesterdayStr) ? yesterdayStr : null);
+
+    if (checkDateStr) {
+      const checkDatesSet = new Set(dates);
+      let currentCheck = new Date(checkDateStr);
+      
+      while (checkDatesSet.has(currentCheck.toISOString().split('T')[0])) {
+        streak++;
+        currentCheck.setDate(currentCheck.getDate() - 1);
+      }
+    }
+
+    // Heatmap data: Group by date and count
+    const heatmapData = await this.prisma.reviewHistory.groupBy({
+      by: ['created_at'],
+      where: { user_id: userId },
+      _count: { _all: true },
+    });
+
+    // Since groupBy on created_at (DateTime) gives granular results, we aggregate manually for days
+    const dailyMap: Record<string, number> = {};
+    history.forEach(h => {
+        const d = h.created_at.toISOString().split('T')[0];
+        dailyMap[d] = (dailyMap[d] || 0) + 1;
+    });
+
+    const heatmap = Object.entries(dailyMap).map(([date, count]) => ({ date, count }));
+
+    return { 
+      streak, 
+      heatmap,
+      todayCount: history.filter(h => h.created_at.toISOString().split('T')[0] === today).length
+    };
+  }
+
   async getAllWords(userId: string) {
     return this.prisma.userVocabulary.findMany({
       where: { user_id: userId },
@@ -141,17 +199,21 @@ export class FlashcardsService {
     }
 
     // Update Ease Factor (Simplified SM-2)
-    // Map our 0-3 rating to SM-2's 0-5
-    // 0 (Again) -> 0
-    // 1 (Hard) -> 2
-    // 2 (Good) -> 4
-    // 3 (Easy) -> 5
     const mapped = rating === 0 ? 0 : (rating === 1 ? 2 : (rating === 2 ? 4 : 5));
     ease_factor = ease_factor + (0.1 - (5 - mapped) * (0.08 + (5 - mapped) * 0.02));
     if (ease_factor < 1.3) ease_factor = 1.3;
 
     const next_review = new Date();
     next_review.setDate(next_review.getDate() + interval);
+
+    // Log to history
+    await this.prisma.reviewHistory.create({
+      data: {
+        user_id: word.user_id,
+        vocabulary_id: id,
+        rating: rating,
+      }
+    });
 
     return this.prisma.userVocabulary.update({
       where: { id },
