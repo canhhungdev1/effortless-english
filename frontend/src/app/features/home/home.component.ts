@@ -261,12 +261,20 @@ export class HomeComponent implements OnInit {
       this.courses.set(courses);
     });
 
-    this.refreshStats();
+    this.authService.currentUser$.subscribe((user: any) => {
+      this.refreshStats();
+    });
+
+    // Listen to reactive stats stream for automatic updates
+    this.vocabService.stats$.subscribe(stats => {
+      if (stats) {
+        this.dueCount.set(stats.dueCount);
+      }
+    });
   }
 
   refreshStats() {
-    this.vocabService.getReviewStats().subscribe((stats: any) => {
-      this.dueCount.set(stats.dueCount);
-    });
+    // We can still trigger a refresh if needed, but the subscription above will handle the UI update
+    this.vocabService.getReviewStats().subscribe();
   }
 }

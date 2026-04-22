@@ -226,9 +226,14 @@ export class FlashcardSessionComponent implements OnInit {
 
     const currentWord = this.shuffledDeck[this.currentIndex];
     
-    if (currentWord.id) {
-      this.vocabService.reviewWord(currentWord.id, rating as any).subscribe();
-    }
+    this.vocabService.ensureWordAndReview(currentWord, rating as any).subscribe({
+      next: (res) => {
+        // If it was a new word, it now has an ID returned from server/local
+        if (res && res.id) {
+          currentWord.id = res.id;
+        }
+      }
+    });
 
     // Start transition
     this.isTransitioning = true;

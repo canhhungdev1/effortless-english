@@ -3,47 +3,90 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { VocabularyService } from '../../core/services/vocabulary.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { AuthService } from '../../core/auth/auth.service';
 import { FlashcardSessionComponent } from '../../shared/components/flashcards/flashcard-session.component';
 import { map } from 'rxjs';
 
 @Component({
   selector: 'app-smart-review',
   standalone: true,
-  imports: [CommonModule, FlashcardSessionComponent],
+  imports: [CommonModule, RouterLink, FlashcardSessionComponent],
   template: `
-    <div class="review-container fade-in">
+    <div class="review-container fade-in" [class.is-loading]="!stats">
       <div class="header-section">
         <div class="header-content">
-          <h1 class="title">Smart Review Studio</h1>
+          <h1 class="title">Smart Review Vocabulary</h1>
           <p class="subtitle">Optimize your memory using Spaced Repetition (SRS).</p>
         </div>
-        <div class="status-badge" [class.due]="stats.dueCount > 0">
-          <div class="pulse-dot" *ngIf="stats.dueCount > 0"></div>
-          {{ stats.dueCount > 0 ? 'Action Required' : 'All Caught Up' }}
+        <div class="header-actions">
+          <button class="secondary-btn manage-btn" routerLink="/flashcards">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
+            </svg>
+            Manage Vocabulary
+          </button>
+          
+          <button class="icon-btn refresh-btn" (click)="syncData()" [title]="'Refresh Data'" [class.spinning]="!stats">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+          </button>
         </div>
       </div>
 
+      <!-- Loading Overlay -->
+      <div class="loading-overlay" *ngIf="!stats">
+        <div class="loader"></div>
+        <p>Connecting to your personal collection...</p>
+      </div>
+
       <!-- Stats Dashboard -->
-      <div class="stats-grid">
-        <div class="stat-card due">
-          <div class="stat-icon">🔥</div>
-          <div class="stat-value">{{ stats.dueCount }}</div>
-          <div class="stat-label">Words Due Now</div>
-          <div class="stat-desc">Review these to prevent forgetting.</div>
+      <div class="stats-bar" *ngIf="stats">
+        <div class="stat-item due">
+          <div class="stat-top">
+            <div class="stat-icon-sm">🔥</div>
+            <div class="stat-info">
+              <span class="stat-num">{{ stats.dueCount }}</span>
+              <span class="stat-label">Due Now</span>
+            </div>
+          </div>
+          <div class="stat-progress">
+            <div class="stat-progress-fill due-fill" [style.width.%]="stats.totalCount ? (stats.dueCount / stats.totalCount * 100) : 0"></div>
+          </div>
+          <div class="stat-meta">{{ stats.totalCount ? (stats.dueCount / stats.totalCount * 100 | number:'1.0-0') : 0 }}% of collection needs review</div>
         </div>
 
-        <div class="stat-card total">
-          <div class="stat-icon">📚</div>
-          <div class="stat-value">{{ stats.totalCount }}</div>
-          <div class="stat-label">Total Collection</div>
-          <div class="stat-desc">Your growing knowledge base.</div>
+        <div class="stat-divider"></div>
+
+        <div class="stat-item total">
+          <div class="stat-top">
+            <div class="stat-icon-sm">📚</div>
+            <div class="stat-info">
+              <span class="stat-num">{{ stats.totalCount }}</span>
+              <span class="stat-label">Total</span>
+            </div>
+          </div>
+          <div class="stat-progress">
+            <div class="stat-progress-fill learning-fill" [style.width.%]="stats.totalCount ? ((stats.totalCount - stats.masteredCount) / stats.totalCount * 100) : 0"></div>
+            <div class="stat-progress-fill mastered-fill" [style.width.%]="stats.totalCount ? (stats.masteredCount / stats.totalCount * 100) : 0"></div>
+          </div>
+          <div class="stat-meta">{{ stats.totalCount - stats.masteredCount - stats.dueCount }} learning · {{ stats.dueCount }} reviewing</div>
         </div>
 
-        <div class="stat-card mastered">
-          <div class="stat-icon">🏆</div>
-          <div class="stat-value">{{ stats.masteredCount }}</div>
-          <div class="stat-label">Words Mastered</div>
-          <div class="stat-desc">Safely stored in long-term memory.</div>
+        <div class="stat-divider"></div>
+
+        <div class="stat-item mastered">
+          <div class="stat-top">
+            <div class="stat-icon-sm">🏆</div>
+            <div class="stat-info">
+              <span class="stat-num">{{ stats.masteredCount }}</span>
+              <span class="stat-label">Mastered</span>
+            </div>
+          </div>
+          <div class="stat-progress">
+            <div class="stat-progress-fill mastered-fill" [style.width.%]="stats.totalCount ? (stats.masteredCount / stats.totalCount * 100) : 0"></div>
+          </div>
+          <div class="stat-meta">{{ stats.totalCount ? (stats.masteredCount / stats.totalCount * 100 | number:'1.0-0') : 0 }}% mastery rate</div>
         </div>
       </div>
 
@@ -107,31 +150,83 @@ import { map } from 'rxjs';
     .review-container { max-width: 1100px; margin: 0 auto; padding: 40px 20px; }
     
     .header-section { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
+    .header-actions { display: flex; align-items: center; gap: 12px; }
+    
+    .manage-btn {
+      display: flex; align-items: center; gap: 8px; padding: 10px 18px;
+      background: white; border: 1px solid var(--border-color); border-radius: 12px;
+      color: var(--text-primary); font-size: 14px; font-weight: 700;
+      cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: var(--shadow-sm);
+      
+      svg { transition: transform 0.3s; }
+      &:hover { 
+        background: #f8fafc; border-color: var(--primary-light); color: var(--primary);
+        transform: translateY(-2px); box-shadow: var(--shadow-md);
+        svg { transform: translateX(-2px); }
+      }
+      &:active { transform: translateY(0); }
+    }
+
+    .refresh-btn { 
+      background: white; border: 1px solid var(--border-color); color: var(--text-muted);
+      width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      &:hover { color: var(--primary); border-color: var(--primary-light); transform: rotate(30deg); box-shadow: var(--shadow-sm); }
+      &:active { transform: scale(0.9) rotate(45deg); }
+      &.spinning svg { animation: spin 1s linear infinite; }
+    }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
     .title { font-size: 36px; font-weight: 850; letter-spacing: -1px; color: var(--text-primary); margin-bottom: 8px; }
     .subtitle { color: var(--text-muted); font-size: 18px; }
+
+    .review-container.is-loading { opacity: 0.7; pointer-events: none; }
     
-    .status-badge { 
-      padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 700; text-transform: uppercase;
-      background: #f1f5f9; color: #64748b; display: flex; align-items: center; gap: 8px;
+    .loading-overlay {
+      height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+      color: var(--text-muted); font-weight: 600;
     }
-    .status-badge.due { background: #fee2e2; color: #ef4444; }
-    .pulse-dot { width: 8px; height: 8px; background: #ef4444; border-radius: 50%; animation: pulse 1.5s infinite; }
-    @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(2.5); opacity: 0; } }
-
-    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 40px; }
-    .stat-card { 
-      padding: 32px; border-radius: 24px; background: white; border: 1px solid var(--border-color);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      &:hover { transform: translateY(-8px); box-shadow: var(--shadow-xl); }
+    .loader {
+      width: 48px; height: 48px; border: 5px solid var(--bg-gray); border-bottom-color: var(--primary);
+      border-radius: 50%; display: inline-block; box-sizing: border-box; animation: rotation 1s linear infinite;
     }
-    .stat-icon { font-size: 32px; margin-bottom: 16px; }
-    .stat-value { font-size: 48px; font-weight: 900; line-height: 1; margin-bottom: 8px; color: var(--text-primary); }
-    .stat-label { font-size: 14px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
-    .stat-desc { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
+    @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    .stat-card.due { border-left: 6px solid #ef4444; .stat-value { color: #ef4444; } }
-    .stat-card.total { border-left: 6px solid var(--primary); .stat-value { color: var(--primary); } }
-    .stat-card.mastered { border-left: 6px solid #10b981; .stat-value { color: #10b981; } }
+    .stats-bar {
+      display: flex; align-items: stretch; gap: 0;
+      background: white; border-radius: 20px; border: 1px solid var(--border-color);
+      padding: 20px 0; margin-bottom: 32px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .stat-item {
+      flex: 1; padding: 0 28px; display: flex; flex-direction: column; gap: 10px;
+    }
+    .stat-divider {
+      width: 1px; background: var(--border-color); margin: 4px 0;
+    }
+    .stat-top { display: flex; align-items: center; gap: 12px; }
+    .stat-icon-sm { font-size: 22px; }
+    .stat-info { display: flex; align-items: baseline; gap: 8px; }
+    .stat-num { font-size: 28px; font-weight: 900; color: var(--text-primary); line-height: 1; }
+    .stat-label { font-size: 13px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; }
+    .stat-progress {
+      height: 6px; background: #f1f5f9; border-radius: 3px; overflow: hidden;
+      display: flex;
+    }
+    .stat-progress-fill {
+      height: 100%; border-radius: 3px;
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      min-width: 0;
+    }
+    .due-fill { background: linear-gradient(90deg, #ef4444, #f97316); }
+    .learning-fill { background: linear-gradient(90deg, #3b82f6, #6366f1); }
+    .mastered-fill { background: linear-gradient(90deg, #10b981, #34d399); }
+    .stat-meta { font-size: 12px; color: #94a3b8; font-weight: 500; }
+
+    .stat-item.due .stat-num { color: #ef4444; }
+    .stat-item.total .stat-num { color: var(--primary); }
+    .stat-item.mastered .stat-num { color: #10b981; }
 
     .main-layout { display: grid; grid-template-columns: 1fr 340px; gap: 40px; }
     
@@ -189,9 +284,9 @@ import { map } from 'rxjs';
       .title { font-size: 28px; }
       .subtitle { font-size: 15px; }
       
-      .stats-grid { grid-template-columns: 1fr; gap: 16px; }
-      .stat-card { padding: 24px; }
-      .stat-value { font-size: 36px; }
+      .stats-bar { flex-direction: column; gap: 0; padding: 16px 0; }
+      .stat-item { padding: 14px 20px; }
+      .stat-divider { width: auto; height: 1px; margin: 0 20px; }
       
       .action-panel { padding: 24px; }
       .count-big { font-size: 64px; }
@@ -202,40 +297,37 @@ import { map } from 'rxjs';
     }
 
     @media (max-width: 480px) {
-      .stats-grid { grid-template-columns: 1fr; }
       .bar-label { font-size: 10px; }
       .forecast-panel { padding: 20px; }
     }
   `]
 })
 export class SmartReviewComponent implements OnInit {
-  private vocabService = inject(VocabularyService);
+  public vocabService = inject(VocabularyService);
+  private auth = inject(AuthService);
   private notification = inject(NotificationService);
 
-  stats = {
-    dueCount: 0,
-    totalCount: 0,
-    masteredCount: 0,
-    forecast: [] as any[]
-  };
-
+  stats: any = null;
   showStudyModal = false;
   studySessionWords: any[] = [];
 
   ngOnInit() {
-    this.refreshStats();
+    // Listen to reactive stats stream - updates automatically
+    this.vocabService.stats$.subscribe(s => {
+      this.stats = s;
+    });
+
+    // Trigger a data sync immediately
+    this.syncData();
   }
 
-  refreshStats() {
-    this.vocabService.getReviewStats().subscribe(data => {
-      this.stats = data;
-    });
+  syncData() {
+    this.vocabService.refreshVocabulary();
   }
 
   getBarHeight(count: number): number {
-    if (this.stats.totalCount === 0) return 0;
-    // Normalized height: max count across forecast determines 100%
-    const max = Math.max(...this.stats.forecast.map(f => f.count), 1);
+    if (!this.stats || this.stats.totalCount === 0) return 0;
+    const max = Math.max(...this.stats.forecast.map((f: any) => f.count), 1);
     return (count / max) * 100;
   }
 
@@ -261,7 +353,6 @@ export class SmartReviewComponent implements OnInit {
 
   onSessionClose() {
     this.showStudyModal = false;
-    this.refreshStats();
-    this.vocabService.refreshVocabulary(); // Ensure list is updated too
+    this.syncData();
   }
 }

@@ -37,11 +37,14 @@ import { AuthService } from '../../../core/auth/auth.service';
             <li class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
               <a routerLink="/" class="nav-link" (click)="closeSidebar.emit()">Library</a>
             </li>
-            <li class="nav-item">
-              <a class="nav-link">Guide</a>
+            <li class="nav-item" routerLinkActive="active">
+              <a routerLink="/flashcards" class="nav-link" (click)="closeSidebar.emit()">My Vocabulary</a>
             </li>
             <li class="nav-item" routerLinkActive="active">
-              <a routerLink="/flashcards" class="nav-link" (click)="closeSidebar.emit()">My Flashcards</a>
+              <a routerLink="/review" class="nav-link" (click)="closeSidebar.emit()">Smart Review</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link">Guide</a>
             </li>
             <li class="nav-item">
               <a class="nav-link">Support</a>

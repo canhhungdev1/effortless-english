@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpContext } from '@angular/common/http';
-import { BehaviorSubject, Observable, of, tap, switchMap, forkJoin } from 'rxjs';
+import { BehaviorSubject, Observable, of, tap, switchMap, forkJoin, catchError } from 'rxjs';
 import { SKIP_LOADING } from '../interceptors/loading.interceptor';
 import { environment } from '../../../environments/environment';
 import { UserVocabulary, VocabularyWord, ReviewRating } from '../models/course.model';
@@ -18,6 +18,9 @@ export class VocabularyService {
   // State
   private vocabSubject = new BehaviorSubject<UserVocabulary[]>([]);
   vocab$ = this.vocabSubject.asObservable();
+
+  private statsSubject = new BehaviorSubject<any>(null);
+  stats$ = this.statsSubject.asObservable();
 
   constructor() {
     // Initial load based on auth state
@@ -37,6 +40,8 @@ export class VocabularyService {
   }
 
   refreshVocabulary(skipLoading: boolean = false) {
+    this.refreshStats(); // Always refresh stats when vocabulary is refreshed
+    
     if (this.auth.isLoggedIn()) {
       const context = skipLoading ? new HttpContext().set(SKIP_LOADING, true) : new HttpContext();
       this.http.get<UserVocabulary[]>(`${this.apiUrl}/all`, { context }).subscribe(data => {
@@ -78,8 +83,18 @@ export class VocabularyService {
 
   toggleFavorite(word: VocabularyWord): Observable<any> {
     if (this.auth.isLoggedIn()) {
+      // Optimistic Update
+      const currentVocab = this.vocabSubject.value;
+      const updatedVocab = currentVocab.map(v => 
+        v.word === word.word ? { ...v, is_favorite: !v.is_favorite } : v
+      );
+      this.vocabSubject.next(updatedVocab);
+
       return this.http.post(`${this.apiUrl}/toggle-favorite`, word).pipe(
-        tap(() => this.refreshVocabulary())
+        tap({
+          error: () => this.vocabSubject.next(currentVocab),
+          next: () => this.refreshVocabulary(true)
+        })
       );
     } else {
       const localData = this.getLocalVocab();
@@ -113,8 +128,19 @@ export class VocabularyService {
 
   deleteWord(id: string): Observable<any> {
     if (this.auth.isLoggedIn()) {
+      // Optimistic Update: Remove from local state immediately
+      const currentVocab = this.vocabSubject.value;
+      const updatedVocab = currentVocab.filter(v => v.id !== id);
+      this.vocabSubject.next(updatedVocab);
+
       return this.http.delete(`${this.apiUrl}/${id}`).pipe(
-        tap(() => this.refreshVocabulary())
+        tap({
+          error: () => {
+            // Revert on error
+            this.vocabSubject.next(currentVocab);
+          },
+          next: () => this.refreshVocabulary(true) // Silently refresh in background
+        })
       );
     } else {
       const filtered = this.getLocalVocab().filter(v => v.id !== id);
@@ -164,22 +190,52 @@ export class VocabularyService {
     }
   }
 
+  ensureWordAndReview(word: any, rating: ReviewRating): Observable<any> {
+    // If the word already has an ID, it's already in the collection
+    if (word.id && word.id !== 'guest') {
+      return this.reviewWord(word.id, rating);
+    }
+
+    // Otherwise, first add it to the collection, then review it
+    return this.addWord(word).pipe(
+      switchMap(addedWord => {
+        // Now that we have an ID, we can review it
+        return this.reviewWord(addedWord.id, rating);
+      })
+    );
+  }
+
+  private defaultStats = { dueCount: 0, totalCount: 0, masteredCount: 0, forecast: [] };
+
   getReviewStats(): Observable<any> {
     if (this.auth.isLoggedIn()) {
       return this.http.get(`${this.apiUrl}/stats`, {
         context: new HttpContext().set(SKIP_LOADING, true)
-      });
+      }).pipe(
+        tap(stats => this.statsSubject.next(stats)),
+        catchError(() => {
+          // On 401 or any error, push default stats so UI doesn't hang
+          this.statsSubject.next(this.defaultStats);
+          return of(this.defaultStats);
+        })
+      );
     } else {
       const localData = this.getLocalVocab();
       const now = new Date();
       const dueCount = localData.filter(v => new Date(v.next_review) <= now).length;
-      return of({
+      const stats = {
         dueCount,
         totalCount: localData.length,
         masteredCount: 0, 
         forecast: []
-      });
+      };
+      this.statsSubject.next(stats);
+      return of(stats);
     }
+  }
+
+  refreshStats() {
+    this.getReviewStats().subscribe();
   }
 
   syncToCloud(): Observable<any> {

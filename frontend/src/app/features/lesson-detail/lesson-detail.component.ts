@@ -446,6 +446,9 @@ export class LessonDetailComponent implements OnInit {
     this.courseSlug = this.route.snapshot.paramMap.get('courseSlug')!;
     this.lessonSlug = this.route.snapshot.paramMap.get('lessonSlug')!;
 
+    // Subscribe to vocabulary changes to ensure UI stays in sync (optimistic updates)
+    this.vocabService.vocab$.subscribe();
+
     this.courseService.getLesson(this.courseSlug, this.lessonSlug).subscribe((lesson: Lesson) => {
       if (lesson) {
         this.lesson.set(lesson);
