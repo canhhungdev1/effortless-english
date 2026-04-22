@@ -7,6 +7,7 @@ import { NotificationService } from '../../../core/services/notification.service
 import { LUCIDE_ICONS } from '../../../core/constants/icons.constants';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import WaveSurfer from 'wavesurfer.js';
+import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions.esm.js';
 
 interface VttLine {
   text: string;
@@ -132,6 +133,16 @@ interface VttLine {
                     </button>
                     <button class="icon-btn" (click)="forward()" title="Forward 3s" [innerHTML]="icons.SKIP_FORWARD"></button>
                   </div>
+                  <div class="speed-group">
+                    <span class="speed-label">Speed</span>
+                    <select [ngModel]="playbackRate()" (ngModelChange)="setPlaybackRate($event)">
+                       <option [value]="0.5">0.5x</option>
+                       <option [value]="0.75">0.75x</option>
+                       <option [value]="1.0">1.0x</option>
+                       <option [value]="1.25">1.25x</option>
+                       <option [value]="1.5">1.5x</option>
+                    </select>
+                  </div>
                   <div class="zoom-controls">
                      <span class="zoom-label">Zoom</span>
                      <input type="range" min="10" max="500" value="100" (input)="onZoomChange($event)">
@@ -145,7 +156,8 @@ interface VttLine {
                    class="sync-item" 
                    [id]="'line-' + i"
                    [class.active]="i === currentLineIndex()"
-                   [class.completed]="i < currentLineIndex()">
+                   [class.completed]="i < currentLineIndex()"
+                   (click)="jumpToRegion(i)">
                 <div class="sync-info">
                   <span class="sync-num">{{ i + 1 }}</span>
                   <div class="sync-text">{{ line.text }}</div>
@@ -201,6 +213,10 @@ interface VttLine {
                   <div class="shortcut"><kbd>Space</kbd> <span>Mark / Pause</span></div>
                   <div class="shortcut"><kbd>←</kbd> <kbd>→</kbd> <span>Seek 3s</span></div>
                </div>
+
+               <div class="studio-hint">
+                  <strong>Tip:</strong> Drag the edges of the color blocks on the waveform to fine-tune timing.
+               </div>
              </div>
 
              <div class="final-actions">
@@ -219,7 +235,7 @@ interface VttLine {
   `,
   styles: [`
     :host { --primary: #3b82f6; --primary-dark: #2563eb; --success: #10b981; --danger: #ef4444; --bg: #f8fafc; --text-main: #1e293b; --text-sub: #64748b; --border: #e2e8f0; }
-    .vtt-creator-container { max-width: 1300px; margin: 0 auto; padding: 24px; font-family: 'Inter', sans-serif; color: var(--text-main); }
+    .vtt-creator-container { max-width: 1400px; margin: 0 auto; padding: 24px; font-family: 'Inter', sans-serif; color: var(--text-main); }
     
     .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
     .title { font-size: 26px; font-weight: 850; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 12px; }
@@ -269,13 +285,18 @@ interface VttLine {
     .playback-btns { display: flex; align-items: center; gap: 12px; }
     .play-pause-btn { width: 44px; height: 44px; border-radius: 50%; background: var(--primary); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; &:hover { transform: scale(1.1); background: #60a5fa; } }
     .icon-btn { background: rgba(255,255,255,0.1); border: none; color: #fff; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; &:hover { background: rgba(255,255,255,0.2); } }
+    
+    .speed-group { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 8px; }
+    .speed-label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; }
+    .speed-group select { background: transparent; color: #fff; border: none; font-size: 12px; font-weight: 700; cursor: pointer; outline: none; option { background: #1e293b; } }
+
     .zoom-controls { display: flex; align-items: center; gap: 12px; }
     .zoom-label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; }
     .zoom-controls input { width: 100px; accent-color: var(--primary); }
     .time-display { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #94a3b8; }
 
     .lines-sync-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; padding: 0; background: #f1f5f9; }
-    .sync-item { padding: 18px 24px; background: #fff; border-bottom: 1px solid var(--border); transition: all 0.3s; position: relative; }
+    .sync-item { padding: 18px 24px; background: #fff; border-bottom: 1px solid var(--border); transition: all 0.3s; position: relative; cursor: pointer; }
     .sync-item.active { background: #eff6ff; border-left: 4px solid var(--primary); z-index: 10; scroll-margin: 100px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
     .sync-item.completed { background: #fcfcfc; }
     .sync-item.completed .sync-text { color: var(--text-sub); }
@@ -285,12 +306,12 @@ interface VttLine {
     .sync-text { font-size: 15px; color: var(--text-main); font-weight: 550; flex: 1; line-height: 1.4; }
     
     .sync-footer { display: flex; align-items: center; gap: 12px; margin-left: 36px; margin-top: 8px; }
-    .sync-badge { display: flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--primary); background: #eff6ff; padding: 2px 8px; border-radius: 6px; }
+    .sync-badge { display: inline-flex; align-items: center; gap: 4px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--primary); background: #eff6ff; padding: 2px 8px; border-radius: 6px; line-height: 1; }
     .sync-badge.incomplete { color: #94a3b8; background: #f1f5f9; }
-    .sync-separator { width: 1px; height: 10px; background: var(--border); }
+    .sync-separator { width: 1px; height: 12px; background: var(--border); margin: 0 4px; }
 
     .studio-sidebar { background: #f8fafc; display: flex; flex-direction: column; }
-    .sidebar-scroll-content { flex: 1; overflow-y: auto; padding: 28px; display: flex; flex-direction: column; gap: 28px; }
+    .sidebar-scroll-content { flex: 1; overflow-y: auto; padding: 28px; display: flex; flex-direction: column; gap: 24px; }
     
     .progress-box { background: #fff; padding: 20px; border-radius: 16px; border: 1px solid var(--border); }
     .progress-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px; }
@@ -306,13 +327,14 @@ interface VttLine {
     @keyframes pulse-shadow { 0% { box-shadow: 0 0 0 0 rgba(30, 41, 59, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(30, 41, 59, 0); } 100% { box-shadow: 0 0 0 0 rgba(30, 41, 59, 0); } }
 
     .secondary-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .action-btn { background: #fff; border: 1px solid var(--border); color: var(--text-sub); padding: 10px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; &:hover:not(:disabled) { background: #f8fafc; color: var(--text-main); border-color: #cbd5e1; } &:disabled { opacity: 0.5; cursor: not-allowed; } }
+    .action-btn { background: #fff; border: 1px solid var(--border); color: var(--text-sub); padding: 10px 16px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; &:hover:not(:disabled) { background: #f8fafc; color: var(--text-main); border-color: #cbd5e1; } &:disabled { opacity: 0.5; cursor: not-allowed; } }
     .action-btn.danger:hover { color: var(--danger); border-color: #fecaca; background: #fff1f1; }
 
     .shortcuts-help { padding-top: 10px; border-top: 1px dashed var(--border); }
     .help-title { font-size: 11px; font-weight: 800; color: var(--text-sub); text-transform: uppercase; margin-bottom: 12px; }
     .shortcut { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px; color: #475569; }
     .shortcut kbd { background: #f1f5f9; padding: 2px 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; font-weight: 700; font-size: 10px; box-shadow: 0 1px 0 rgba(0,0,0,0.1); }
+    .studio-hint { font-size: 11px; color: var(--text-sub); line-height: 1.5; background: #fff; padding: 12px; border-radius: 8px; border: 1px solid var(--border); }
 
     .final-actions { padding: 24px 28px; background: white; border-top: 1px solid var(--border); }
     .save-btn { background: var(--success); color: white; border: none; padding: 18px; border-radius: 14px; width: 100%; font-size: 16px; font-weight: 850; cursor: pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; &:hover:not(:disabled) { background: #059669; transform: scale(1.02); box-shadow: 0 8px 15px rgba(16, 185, 129, 0.3); } &:disabled { background: #cbd5e1; box-shadow: none; cursor: not-allowed; } }
@@ -321,12 +343,28 @@ interface VttLine {
     .fade-in { animation: fadeIn 0.4s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    .icon-vtt { width: 32px; height: 32px; color: var(--primary); }
-    .icon-small { width: 20px; height: 20px; color: var(--primary); }
-    .icon-xxs { width: 12px; height: 12px; }
-    .btn-icon, .btn-icon-right { width: 18px; height: 18px; }
-    .action-icon { width: 16px; height: 16px; }
-    .save-icon { width: 20px; height: 20px; }
+    .icon-vtt { width: 32px; height: 32px; color: var(--primary); display: flex; align-items: center; justify-content: center; }
+    .icon-small { width: 20px; height: 20px; color: var(--primary); display: flex; align-items: center; justify-content: center; }
+    .icon-xxs { width: 13px; height: 13px; display: flex; align-items: center; justify-content: center; }
+    .btn-icon, .btn-icon-right { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; }
+    .action-icon { width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; }
+    .save-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+    
+    /* Ensure all SVGs fit their containers */
+    ::ng-deep .vtt-creator-container svg { width: 100%; height: 100%; display: block; }
+
+    /* WaveSurfer Regions Styling */
+    #waveform ::part(region) {
+      cursor: ew-resize;
+      opacity: 0.4;
+      border-right: 2px solid rgba(255,255,255,0.4);
+      border-left: 2px solid rgba(255,255,255,0.4);
+    }
+    #waveform ::part(region-handle) {
+      width: 4px;
+      background: rgba(255,255,255,0.6);
+      &:hover { background: #fff; }
+    }
   `]
 })
 export class AdminVttCreatorComponent implements AfterViewInit, OnDestroy {
@@ -338,6 +376,7 @@ export class AdminVttCreatorComponent implements AfterViewInit, OnDestroy {
   currentLineIndex = signal(0);
   isSaving = signal(false);
   isPlaying = signal(false);
+  playbackRate = signal(1.0);
   
   // Real-time audio stats
   currentTimeFormatted = signal('00:00:00');
@@ -348,20 +387,25 @@ export class AdminVttCreatorComponent implements AfterViewInit, OnDestroy {
   Math = Math;
 
   private wavesurfer?: WaveSurfer;
+  private wsRegions?: any;
   @ViewChild('waveformContainer') waveformContainer?: ElementRef<HTMLDivElement>;
   @ViewChild('linesList') linesList?: ElementRef<HTMLDivElement>;
+
+  // Config for regions
+  private regionColors = [
+    'rgba(59, 131, 246, 0.4)', // light blue
+    'rgba(16, 185, 129, 0.4)'  // light green
+  ];
 
   constructor(
     private http: HttpClient, 
     private notification: NotificationService,
     private sanitizer: DomSanitizer
   ) {
-    // Sanitize all icons
     Object.keys(LUCIDE_ICONS).forEach(key => {
       this.icons[key] = this.sanitizer.bypassSecurityTrustHtml((LUCIDE_ICONS as any)[key]);
     });
 
-    // Try to restore last used path
     const savedPath = localStorage.getItem('vtt_last_path');
     if (savedPath) this.targetPath = savedPath;
   }
@@ -379,6 +423,9 @@ export class AdminVttCreatorComponent implements AfterViewInit, OnDestroy {
   private initWaveSurfer() {
     if (!this.waveformContainer) return;
 
+    // Reset plugin instance if any
+    this.wsRegions = RegionsPlugin.create();
+
     this.wavesurfer = WaveSurfer.create({
       container: this.waveformContainer.nativeElement,
       waveColor: '#334155',
@@ -391,6 +438,7 @@ export class AdminVttCreatorComponent implements AfterViewInit, OnDestroy {
       height: 128,
       normalize: true,
       minPxPerSec: 100,
+      plugins: [this.wsRegions]
     });
 
     this.wavesurfer.load(this.audioUrl);
@@ -404,9 +452,49 @@ export class AdminVttCreatorComponent implements AfterViewInit, OnDestroy {
 
     this.wavesurfer.on('ready', (duration) => {
       this.totalTimeFormatted.set(this.formatTimePadded(duration));
+      this.restoreRegions();
     });
 
     this.wavesurfer.on('finish', () => this.isPlaying.set(false));
+
+    // Region Events
+    this.wsRegions.on('region-updated', (region: any) => {
+      const index = parseInt(region.id.split('-')[1]);
+      if (isNaN(index)) return;
+
+      const oldStart = this.lines[index].start || 0;
+      const oldEnd = this.lines[index].end || 0;
+      
+      this.lines[index].start = region.start;
+      this.lines[index].end = region.end;
+      
+      // Boundary Propagation: Sync neighbors if they were previously connected
+      // If start changed, update previous region's end
+      if (index > 0 && region.start !== oldStart) {
+        const prevRegion = this.wsRegions.getRegions().find((r: any) => r.id === `region-${index - 1}`);
+        if (prevRegion) {
+          prevRegion.setOptions({ end: region.start });
+          this.lines[index - 1].end = region.start;
+        }
+      }
+      
+      // If end changed, update next region's start
+      if (index < this.lines.length - 1 && region.end !== oldEnd) {
+        const nextRegion = this.wsRegions.getRegions().find((r: any) => r.id === `region-${index + 1}`);
+        if (nextRegion) {
+          nextRegion.setOptions({ start: region.end });
+          this.lines[index + 1].start = region.end;
+        }
+      }
+
+      this.saveToLocal();
+    });
+
+    this.wsRegions.on('region-clicked', (region: any) => {
+      const index = parseInt(region.id.split('-')[1]);
+      this.currentLineIndex.set(index);
+      this.scrollToActive();
+    });
   }
 
   private destroyWaveSurfer() {
@@ -453,8 +541,6 @@ export class AdminVttCreatorComponent implements AfterViewInit, OnDestroy {
     this.lines = sentences.map(text => ({ text }));
     this.step.set(2);
     localStorage.setItem('vtt_last_path', this.targetPath);
-    
-    // Auto-restore previous progress if matching transcript
     this.restoreProgress();
   }
 
@@ -468,7 +554,6 @@ export class AdminVttCreatorComponent implements AfterViewInit, OnDestroy {
     }, 100);
   }
 
-  // WaveSurfer Actions
   togglePlay() {
     this.wavesurfer?.playPause();
   }
@@ -483,6 +568,11 @@ export class AdminVttCreatorComponent implements AfterViewInit, OnDestroy {
     this.wavesurfer.setTime(Math.min(this.wavesurfer.getDuration(), this.wavesurfer.getCurrentTime() + 3));
   }
 
+  setPlaybackRate(rate: number) {
+    this.playbackRate.set(rate);
+    this.wavesurfer?.setPlaybackRate(rate);
+  }
+
   onZoomChange(event: any) {
     this.wavesurfer?.zoom(Number(event.target.value));
   }
@@ -495,6 +585,19 @@ export class AdminVttCreatorComponent implements AfterViewInit, OnDestroy {
 
     this.lines[index].end = time;
     
+    // Remove existing region for this index if it exists (to prevent overlaps when re-syncing)
+    this.wsRegions.getRegions().find((r: any) => r.id === `region-${index}`)?.remove();
+
+    const start = this.lines[index].start || 0;
+    this.wsRegions.addRegion({
+      id: `region-${index}`,
+      start: start,
+      end: time,
+      color: this.regionColors[index % 2],
+      drag: true,
+      resize: true
+    });
+
     const nextIndex = index + 1;
     if (nextIndex < this.lines.length) {
       this.lines[nextIndex].start = time;
@@ -508,13 +611,22 @@ export class AdminVttCreatorComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  jumpToRegion(index: number) {
+    const line = this.lines[index];
+    if (line.start !== undefined && this.wavesurfer) {
+      this.wavesurfer.setTime(line.start);
+      this.currentLineIndex.set(index);
+    }
+  }
+
   undoMark() {
     const currentIndex = this.currentLineIndex();
     if (currentIndex === 0) return;
 
     const prevIndex = currentIndex - 1;
-    delete this.lines[prevIndex].end;
+    this.wsRegions.getRegions().find((r: any) => r.id === `region-${prevIndex}`)?.remove();
     
+    delete this.lines[prevIndex].end;
     if (currentIndex < this.lines.length) {
       delete this.lines[currentIndex].start;
     }
@@ -526,7 +638,14 @@ export class AdminVttCreatorComponent implements AfterViewInit, OnDestroy {
 
   resetSync() {
     if (!confirm('Are you sure you want to reset all progress?')) return;
+    this.wsRegions.clearRegions();
     this.lines.forEach(l => { delete l.start; delete l.end; });
+    
+    // Reset starting point for the first line
+    if (this.lines.length > 0) {
+      this.lines[0].start = 0;
+    }
+    
     this.currentLineIndex.set(0);
     if (this.wavesurfer) {
       this.wavesurfer.setTime(0);
@@ -554,6 +673,22 @@ export class AdminVttCreatorComponent implements AfterViewInit, OnDestroy {
         this.notification.show('Restored previous progress');
       }
     }
+  }
+
+  private restoreRegions() {
+    if (!this.wsRegions) return;
+    this.lines.forEach((line, index) => {
+      if (line.start !== undefined && line.end !== undefined) {
+         this.wsRegions.addRegion({
+           id: `region-${index}`,
+           start: line.start,
+           end: line.end,
+           color: this.regionColors[index % 2],
+           drag: true,
+           resize: true
+         });
+      }
+    });
   }
 
   private scrollToActive() {
@@ -605,7 +740,6 @@ export class AdminVttCreatorComponent implements AfterViewInit, OnDestroy {
         this.isSaving.set(false);
         this.notification.show(`Success! File saved to: ${res.path}`);
         
-        // Clear progress after successful save
         const key = `vtt_progress_${this.audioUrl.substring(0, 50)}`;
         localStorage.removeItem(key);
       },
