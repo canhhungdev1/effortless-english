@@ -207,9 +207,10 @@ export class VocabularyService {
 
   private defaultStats = { dueCount: 0, totalCount: 0, masteredCount: 0, forecast: [] };
 
-  getReviewStats(): Observable<any> {
+  getReviewStats(skipLoading: boolean = false): Observable<any> {
     if (this.auth.isLoggedIn()) {
-      return this.http.get<any>(`${this.apiUrl}/stats`).pipe(
+      const context = skipLoading ? new HttpContext().set(SKIP_LOADING, true) : new HttpContext();
+      return this.http.get<any>(`${this.apiUrl}/stats`, { context }).pipe(
         tap(stats => this.statsSubject.next(stats)),
         catchError(err => {
           console.error('Error fetching review stats:', err);
@@ -232,9 +233,10 @@ export class VocabularyService {
     }
   }
 
-  getStudyStats(): Observable<any> {
+  getStudyStats(skipLoading: boolean = false): Observable<any> {
     if (!this.auth.isLoggedIn()) return of({ streak: 0, heatmap: [] });
-    return this.http.get<any>(`${this.apiUrl}/study-stats`).pipe(
+    const context = skipLoading ? new HttpContext().set(SKIP_LOADING, true) : new HttpContext();
+    return this.http.get<any>(`${this.apiUrl}/study-stats`, { context }).pipe(
       catchError(err => {
         console.error('Error fetching study stats:', err);
         return of({ streak: 0, heatmap: [] });
@@ -242,8 +244,8 @@ export class VocabularyService {
     );
   }
 
-  refreshStats() {
-    this.getReviewStats().subscribe();
+  refreshStats(silent: boolean = true) {
+    this.getReviewStats(silent).subscribe();
   }
 
   syncToCloud(): Observable<any> {

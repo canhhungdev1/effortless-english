@@ -6,7 +6,7 @@ import { NotificationService } from '../../core/services/notification.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { FlashcardSessionComponent } from '../../shared/components/flashcards/flashcard-session.component';
 import { HeatmapComponent } from '../../shared/components/heatmap/heatmap.component';
-import { map, distinctUntilChanged } from 'rxjs';
+import { map, distinctUntilChanged, take } from 'rxjs';
 
 
 @Component({
@@ -468,7 +468,7 @@ export class SmartReviewComponent implements OnInit {
 
   syncData() {
     this.vocabService.refreshVocabulary();
-    this.vocabService.getStudyStats().subscribe(stats => {
+    this.vocabService.getStudyStats(true).subscribe(stats => {
       this.studyStats = stats;
     });
   }
@@ -481,7 +481,7 @@ export class SmartReviewComponent implements OnInit {
 
   startReview(mode: 'due' | 'all') {
     if (mode === 'due') {
-      this.vocabService.vocab$.pipe(
+      this.vocabService.vocab$.pipe(take(1),
         map(vocab => vocab.filter(v => new Date(v.next_review) <= new Date()))
       ).subscribe(dueWords => {
         if (dueWords.length === 0) {
@@ -492,7 +492,7 @@ export class SmartReviewComponent implements OnInit {
         this.showStudyModal = true;
       });
     } else {
-      this.vocabService.vocab$.subscribe(all => {
+      this.vocabService.vocab$.pipe(take(1)).subscribe(all => {
         this.studySessionWords = all;
         this.showStudyModal = true;
       });
