@@ -15,6 +15,53 @@ export class FlashcardsService {
     });
   }
 
+  async getReviewStats(userId: string) {
+    const now = new Date();
+    const totalCount = await this.prisma.userVocabulary.count({
+      where: { user_id: userId }
+    });
+
+    const dueCount = await this.prisma.userVocabulary.count({
+      where: {
+        user_id: userId,
+        next_review: { lte: now }
+      }
+    });
+
+    const masteredCount = await this.prisma.userVocabulary.count({
+      where: {
+        user_id: userId,
+        interval: { gt: 30 }
+      }
+    });
+
+    // Generate 7-day forecast
+    const forecast: { date: string, count: number }[] = [];
+    for (let i = 0; i < 7; i++) {
+        const date = new Date(now);
+        date.setDate(date.getDate() + i);
+        date.setHours(23, 59, 59, 999); // End of the day
+
+        const count = await this.prisma.userVocabulary.count({
+            where: {
+                user_id: userId,
+                next_review: { lte: date }
+            }
+        });
+        forecast.push({
+            date: date.toISOString().split('T')[0],
+            count: count
+        });
+    }
+
+    return {
+      dueCount,
+      totalCount,
+      masteredCount,
+      forecast
+    };
+  }
+
   async getAllWords(userId: string) {
     return this.prisma.userVocabulary.findMany({
       where: { user_id: userId },

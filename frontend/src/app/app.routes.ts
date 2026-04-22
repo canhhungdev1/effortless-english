@@ -36,6 +36,11 @@ export const routes: Routes = [
         path: 'flashcards',
         loadComponent: () =>
           import('./features/vocabulary-manager/vocabulary-manager.component').then(m => m.VocabularyManagerComponent)
+      },
+      {
+        path: 'review',
+        loadComponent: () =>
+          import('./features/smart-review/smart-review.component').then(m => m.SmartReviewComponent)
       }
     ]
   },

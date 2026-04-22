@@ -164,6 +164,24 @@ export class VocabularyService {
     }
   }
 
+  getReviewStats(): Observable<any> {
+    if (this.auth.isLoggedIn()) {
+      return this.http.get(`${this.apiUrl}/stats`, {
+        context: new HttpContext().set(SKIP_LOADING, true)
+      });
+    } else {
+      const localData = this.getLocalVocab();
+      const now = new Date();
+      const dueCount = localData.filter(v => new Date(v.next_review) <= now).length;
+      return of({
+        dueCount,
+        totalCount: localData.length,
+        masteredCount: 0, 
+        forecast: []
+      });
+    }
+  }
+
   syncToCloud(): Observable<any> {
     const localData = this.getLocalVocab();
     if (localData.length === 0 || !this.auth.isLoggedIn()) return of(null);

@@ -13,6 +13,11 @@ export class FlashcardsController {
     return this.flashcardsService.getDueWords(user.id);
   }
 
+  @Get('stats')
+  getStats(@CurrentUser() user: any) {
+    return this.flashcardsService.getReviewStats(user.id);
+  }
+
   @Get('all')
   getAll(@CurrentUser() user: any) {
     return this.flashcardsService.getAllWords(user.id);

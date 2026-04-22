@@ -5,17 +5,18 @@ import { CourseService } from '../../core/services/course.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { Course } from '../../core/models/course.model';
 import { FlashcardSessionComponent } from '../../shared/components/flashcards/flashcard-session.component';
+import { VocabularyService } from '../../core/services/vocabulary.service';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterLink, FlashcardSessionComponent],
+  imports: [CommonModule, RouterLink],
   template: `
     <div class="home">
       <div class="header-row">
         <h1 class="page-title">Library</h1>
         
-        <div *ngIf="dueCount() > 0" class="review-banner" (click)="openReview()">
+        <div *ngIf="dueCount() > 0" class="review-banner" routerLink="/review">
           <div class="banner-content">
             <span class="banner-icon">🎴</span>
             <div class="banner-text">
@@ -47,12 +48,6 @@ import { FlashcardSessionComponent } from '../../shared/components/flashcards/fl
         </a>
       </div>
     </div>
-
-    <!-- Flashcard Review Overlay -->
-    <app-flashcard-session 
-      *ngIf="showReview()" 
-      [words]="dueWords()" 
-      (close)="closeReview()" />
   `,
   styles: [`
     .home {
@@ -253,13 +248,12 @@ import { FlashcardSessionComponent } from '../../shared/components/flashcards/fl
 })
 export class HomeComponent implements OnInit {
   courses = signal<Course[]>([]);
-  dueWords = signal<any[]>([]);
   dueCount = signal(0);
-  showReview = signal(false);
 
   constructor(
     private courseService: CourseService,
-    private authService: AuthService
+    private authService: AuthService,
+    private vocabService: VocabularyService
   ) {}
 
   ngOnInit() {
@@ -267,26 +261,12 @@ export class HomeComponent implements OnInit {
       this.courses.set(courses);
     });
 
-    if (this.authService.isLoggedIn()) {
-      this.loadDueFlashcards();
-    }
+    this.refreshStats();
   }
 
-  loadDueFlashcards() {
-    this.courseService.getDueFlashcards().subscribe(words => {
-      this.dueWords.set(words);
-      this.dueCount.set(words.length);
+  refreshStats() {
+    this.vocabService.getReviewStats().subscribe((stats: any) => {
+      this.dueCount.set(stats.dueCount);
     });
-  }
-
-  openReview() {
-    if (this.dueCount() > 0) {
-      this.showReview.set(true);
-    }
-  }
-
-  closeReview() {
-    this.showReview.set(false);
-    this.loadDueFlashcards(); // Refresh count
   }
 }
