@@ -1,4 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -290,6 +291,7 @@ export class VocabularyManagerComponent implements OnInit {
   public vocabService = inject(VocabularyService);
   public auth = inject(AuthService);
   private notification = inject(NotificationService);
+  private route = inject(ActivatedRoute);
 
   allVocab: UserVocabulary[] = [];
   filteredVocab: UserVocabulary[] = [];
@@ -313,6 +315,15 @@ export class VocabularyManagerComponent implements OnInit {
     this.vocabService.vocab$.subscribe((data: UserVocabulary[]) => {
       this.allVocab = data;
       this.updateFilters();
+    });
+
+    // Listen for query params to set active filter
+    this.route.queryParamMap.subscribe(params => {
+      const filter = params.get('filter');
+      if (filter && this.filters.some(f => f.key === filter)) {
+        this.activeFilter = filter;
+        this.updateFilters();
+      }
     });
   }
 

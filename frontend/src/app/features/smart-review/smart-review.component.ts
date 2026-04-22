@@ -1,11 +1,11 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { VocabularyService } from '../../core/services/vocabulary.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { FlashcardSessionComponent } from '../../shared/components/flashcards/flashcard-session.component';
-import { map } from 'rxjs';
+import { map, distinctUntilChanged } from 'rxjs';
 
 @Component({
   selector: 'app-smart-review',
@@ -42,51 +42,66 @@ import { map } from 'rxjs';
 
       <!-- Stats Dashboard -->
       <div class="stats-bar" *ngIf="stats">
-        <div class="stat-item due">
+        <div class="stat-item due clickable" (click)="goToVocabulary('due')" title="Click to view due words">
           <div class="stat-top">
             <div class="stat-icon-sm">🔥</div>
             <div class="stat-info">
-              <span class="stat-num">{{ stats.dueCount }}</span>
+              <span class="stat-num">{{ displayStats.dueCount }}</span>
               <span class="stat-label">Due Now</span>
             </div>
           </div>
           <div class="stat-progress">
-            <div class="stat-progress-fill due-fill" [style.width.%]="stats.totalCount ? (stats.dueCount / stats.totalCount * 100) : 0"></div>
+            <div class="stat-progress-fill due-fill" [style.width.%]="stats.totalCount ? (displayStats.dueCount / stats.totalCount * 100) : 0"></div>
           </div>
-          <div class="stat-meta">{{ stats.totalCount ? (stats.dueCount / stats.totalCount * 100 | number:'1.0-0') : 0 }}% of collection needs review</div>
+          <div class="stat-meta">{{ stats.totalCount ? (displayStats.dueCount / stats.totalCount * 100 | number:'1.0-0') : 0 }}% of collection needs review</div>
+          
+          <div class="premium-tooltip">
+             <h4>Study Required</h4>
+             <p>Words that have reached their review interval according to the SM-2 algorithm.</p>
+          </div>
         </div>
 
         <div class="stat-divider"></div>
 
-        <div class="stat-item total">
+        <div class="stat-item total clickable" (click)="goToVocabulary('all')" title="Click to view all words">
           <div class="stat-top">
             <div class="stat-icon-sm">📚</div>
             <div class="stat-info">
-              <span class="stat-num">{{ stats.totalCount }}</span>
+              <span class="stat-num">{{ displayStats.totalCount }}</span>
               <span class="stat-label">Total</span>
             </div>
           </div>
           <div class="stat-progress">
-            <div class="stat-progress-fill learning-fill" [style.width.%]="stats.totalCount ? ((stats.totalCount - stats.masteredCount) / stats.totalCount * 100) : 0"></div>
-            <div class="stat-progress-fill mastered-fill" [style.width.%]="stats.totalCount ? (stats.masteredCount / stats.totalCount * 100) : 0"></div>
+            <div class="stat-progress-fill learning-fill" [style.width.%]="stats.totalCount ? ((displayStats.totalCount - displayStats.masteredCount) / stats.totalCount * 100) : 0"></div>
+            <div class="stat-progress-fill mastered-fill" [style.width.%]="stats.totalCount ? (displayStats.masteredCount / stats.totalCount * 100) : 0"></div>
           </div>
-          <div class="stat-meta">{{ stats.totalCount - stats.masteredCount - stats.dueCount }} learning · {{ stats.dueCount }} reviewing</div>
+          <div class="stat-meta">{{ displayStats.totalCount - displayStats.masteredCount - displayStats.dueCount }} learning · {{ displayStats.dueCount }} reviewing</div>
+          
+          <div class="premium-tooltip">
+             <h4>Learning Progress</h4>
+             <p>Your entire collection breakdown by mastery and review status.</p>
+          </div>
         </div>
 
         <div class="stat-divider"></div>
 
-        <div class="stat-item mastered">
+        <div class="stat-item mastered clickable" (click)="goToVocabulary('learning')" title="Click to view learning words">
           <div class="stat-top">
             <div class="stat-icon-sm">🏆</div>
             <div class="stat-info">
-              <span class="stat-num">{{ stats.masteredCount }}</span>
+              <span class="stat-num">{{ displayStats.masteredCount }}</span>
               <span class="stat-label">Mastered</span>
             </div>
           </div>
           <div class="stat-progress">
-            <div class="stat-progress-fill mastered-fill" [style.width.%]="stats.totalCount ? (stats.masteredCount / stats.totalCount * 100) : 0"></div>
+            <div class="stat-progress-fill mastered-fill" [style.width.%]="stats.totalCount ? (displayStats.masteredCount / stats.totalCount * 100) : 0"></div>
           </div>
-          <div class="stat-meta">{{ stats.totalCount ? (stats.masteredCount / stats.totalCount * 100 | number:'1.0-0') : 0 }}% mastery rate</div>
+          <div class="stat-meta">{{ stats.totalCount ? (displayStats.masteredCount / stats.totalCount * 100 | number:'1.0-0') : 0 }}% mastery rate</div>
+          
+          <div class="premium-tooltip">
+             <h4>Knowledge Shield</h4>
+             <p>Words with high ease factor and long intervals, considered learned for now.</p>
+          </div>
         </div>
       </div>
 
@@ -201,7 +216,28 @@ import { map } from 'rxjs';
     }
     .stat-item {
       flex: 1; padding: 0 28px; display: flex; flex-direction: column; gap: 10px;
+      position: relative;
     }
+    .stat-item.clickable { cursor: pointer; transition: background 0.2s; border-radius: 12px; }
+    .stat-item.clickable:hover { background: #f8fafc; }
+
+    .premium-tooltip {
+      position: absolute; bottom: calc(100% + 15px); left: 50%; transform: translateX(-50%) translateY(10px);
+      width: 260px; background: #1e293b; color: white; padding: 16px; border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2); opacity: 0; pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 100;
+      
+      &::after {
+        content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+        border: 8px solid transparent; border-top-color: #1e293b;
+      }
+      
+      h4 { font-size: 14px; font-weight: 800; margin-bottom: 6px; color: var(--primary-light); }
+      p { font-size: 12px; line-height: 1.5; color: #cbd5e1; margin: 0; }
+    }
+
+    .stat-item:hover .premium-tooltip { opacity: 1; transform: translateX(-50%) translateY(0); }
+
     .stat-divider {
       width: 1px; background: var(--border-color); margin: 4px 0;
     }
@@ -216,7 +252,7 @@ import { map } from 'rxjs';
     }
     .stat-progress-fill {
       height: 100%; border-radius: 3px;
-      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: background 0.3s ease;
       min-width: 0;
     }
     .due-fill { background: linear-gradient(90deg, #ef4444, #f97316); }
@@ -306,19 +342,95 @@ export class SmartReviewComponent implements OnInit {
   public vocabService = inject(VocabularyService);
   private auth = inject(AuthService);
   private notification = inject(NotificationService);
+  private router = inject(Router);
+  private cd = inject(ChangeDetectorRef);
 
   stats: any = null;
+  displayStats = {
+    dueCount: 0,
+    totalCount: 0,
+    masteredCount: 0,
+    forecast: [] as any[]
+  };
+
   showStudyModal = false;
   studySessionWords: any[] = [];
+  private animationTimer: any;
+  private lastTarget: any = null;
 
   ngOnInit() {
     // Listen to reactive stats stream - updates automatically
-    this.vocabService.stats$.subscribe(s => {
-      this.stats = s;
+    this.vocabService.stats$.pipe(
+      distinctUntilChanged((prev, curr) => {
+        if (!prev || !curr) return false;
+        return prev.dueCount === curr.dueCount && 
+               prev.totalCount === curr.totalCount && 
+               prev.masteredCount === curr.masteredCount;
+      })
+    ).subscribe(s => {
+      if (s) {
+        this.stats = s;
+        this.animateStats(s);
+      }
     });
 
     // Trigger a data sync immediately
     this.syncData();
+  }
+
+  animateStats(target: any) {
+    if (!target) return;
+    
+    // Clear any existing timer to prevent overlapping
+    if (this.animationTimer) {
+      clearInterval(this.animationTimer);
+    }
+    
+    // Reset to 0 first to ensure animation always plays from a clean state
+    this.displayStats.dueCount = 0;
+    this.displayStats.totalCount = 0;
+    this.displayStats.masteredCount = 0;
+    this.displayStats.forecast = target.forecast;
+    this.cd.detectChanges();
+
+    // Small delay to ensure the reset is rendered and the user is ready
+    setTimeout(() => {
+      const duration = 1000; // ms
+      const steps = 40;
+      const interval = duration / steps;
+      
+      let currentStep = 0;
+      const targetDue = target.dueCount;
+      const targetTotal = target.totalCount;
+      const targetMastered = target.masteredCount;
+
+      this.animationTimer = setInterval(() => {
+        currentStep++;
+        const progress = this.easeOutQuad(currentStep / steps);
+        
+        this.displayStats.dueCount = Math.round(targetDue * progress);
+        this.displayStats.totalCount = Math.round(targetTotal * progress);
+        this.displayStats.masteredCount = Math.round(targetMastered * progress);
+        
+        this.cd.detectChanges();
+
+        if (currentStep >= steps) {
+          clearInterval(this.animationTimer);
+          this.animationTimer = null;
+          this.displayStats = { ...target };
+          this.cd.detectChanges();
+        }
+      }, interval);
+    }, 150);
+  }
+
+  // Easing function for smoother animation
+  private easeOutQuad(t: number): number {
+    return t * (2 - t);
+  }
+
+  goToVocabulary(filter: string) {
+    this.router.navigate(['/flashcards'], { queryParams: { filter } });
   }
 
   syncData() {
