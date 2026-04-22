@@ -91,6 +91,13 @@ import { FlashcardSessionComponent } from '../../shared/components/flashcards/fl
           </div>
 
           <div class="card-footer">
+            <button class="action-btn speak" (click)="speak(item.word, $event)" title="Listen">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.08"></path>
+              </svg>
+            </button>
+            <div class="footer-spacer"></div>
             <button class="action-btn edit" (click)="editItem(item)">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -256,9 +263,11 @@ import { FlashcardSessionComponent } from '../../shared/components/flashcards/fl
     .card-footer {
       display: flex; justify-content: flex-end; gap: 12px; padding-top: 16px; border-top: 1px solid var(--bg-gray);
     }
+    .footer-spacer { flex: 1; }
     .action-btn {
       width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
       background: var(--bg-gray); color: var(--text-secondary); transition: var(--transition);
+      &:hover.speak { background: var(--primary-light); color: var(--primary); transform: scale(1.1); }
       &:hover.edit { background: var(--primary-light); color: var(--primary); }
       &:hover.delete { background: #fef2f2; color: #ef4444; }
     }
@@ -460,5 +469,16 @@ export class VocabularyManagerComponent implements OnInit {
     }
     
     this.showStudyModal = true;
+  }
+
+  speak(word: string, event: MouseEvent) {
+    event.stopPropagation();
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.lang = 'en-US';
+      utterance.rate = 0.9;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+    }
   }
 }

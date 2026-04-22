@@ -236,11 +236,6 @@ export class FlashcardComponent {
     // Play flip sound
     this.flipSound.currentTime = 0;
     this.flipSound.play().catch(() => {});
-
-    // Speak the word when flipped to front
-    if (!this.isFlipped) {
-      this.speak();
-    }
   }
 
   speak(event?: MouseEvent) {
@@ -260,9 +255,5 @@ export class FlashcardComponent {
   reset() {
     this.isFlipped = false;
     this.flipped.emit(false);
-    // Auto speak when a new card is shown after a short delay
-    setTimeout(() => {
-      this.speak();
-    }, 400);
   }
 }
