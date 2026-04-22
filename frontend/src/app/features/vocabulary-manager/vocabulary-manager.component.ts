@@ -98,12 +98,6 @@ import { FlashcardSessionComponent } from '../../shared/components/flashcards/fl
               </svg>
             </button>
             <div class="footer-spacer"></div>
-            <button class="action-btn edit" (click)="editItem(item)">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-              </svg>
-            </button>
             <button class="action-btn delete" (click)="deleteItem(item)">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="3 6 5 6 21 6"></polyline>
@@ -132,33 +126,7 @@ import { FlashcardSessionComponent } from '../../shared/components/flashcards/fl
       </ng-template>
     </div>
 
-    <!-- Edit Modal (Simplified for now) -->
-    <div class="modal-overlay" *ngIf="editingItem">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Edit Word</h2>
-          <button class="close-btn" (click)="editingItem = null">&times;</button>
-        </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label>Word</label>
-            <input type="text" [value]="editingItem.word" disabled>
-          </div>
-          <div class="form-group">
-            <label>Translation</label>
-            <input type="text" [(ngModel)]="editBuffer.translation">
-          </div>
-          <div class="form-group">
-            <label>Example</label>
-            <textarea rows="3" [(ngModel)]="editBuffer.example"></textarea>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="secondary-btn" (click)="editingItem = null">Cancel</button>
-          <button class="primary-btn" (click)="saveEdit()">Save Changes</button>
-        </div>
-      </div>
-    </div>
+
 
     <!-- Study Modal -->
     <app-flashcard-session 
@@ -268,7 +236,6 @@ import { FlashcardSessionComponent } from '../../shared/components/flashcards/fl
       width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
       background: var(--bg-gray); color: var(--text-secondary); transition: var(--transition);
       &:hover.speak { background: var(--primary-light); color: var(--primary); transform: scale(1.1); }
-      &:hover.edit { background: var(--primary-light); color: var(--primary); }
       &:hover.delete { background: #fef2f2; color: #ef4444; }
     }
 
@@ -293,20 +260,7 @@ import { FlashcardSessionComponent } from '../../shared/components/flashcards/fl
       p { color: var(--text-muted); margin-bottom: 32px; }
     }
 
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
-      display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px;
-    }
-    .modal-content {
-      width: 100%; max-width: 500px; background: var(--bg-white); border-radius: var(--radius-xl); overflow: hidden;
-    }
-    .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between; }
-    .modal-body { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
-    .form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
-    .form-group input, .form-group textarea {
-      width: 100%; padding: 12px; border-radius: var(--radius-md); border: 1.5px solid var(--border-color);
-    }
-    .modal-footer { padding: 20px 24px; border-top: 1px solid var(--border-light); display: flex; justify-content: flex-end; gap: 12px; }
+
 
     @media (max-width: 768px) {
       .vocab-manager { padding: 20px; }
@@ -340,9 +294,6 @@ export class VocabularyManagerComponent implements OnInit {
     { key: 'due', label: 'Due' },
     { key: 'learning', label: 'Learning' }
   ];
-
-  editingItem: UserVocabulary | null = null;
-  editBuffer = { translation: '', example: '' };
 
   ngOnInit() {
     this.vocabService.vocab$.subscribe((data: UserVocabulary[]) => {
@@ -411,33 +362,22 @@ export class VocabularyManagerComponent implements OnInit {
     return new Date(item.next_review) <= new Date();
   }
 
-  editItem(item: UserVocabulary) {
-    this.editingItem = item;
-    this.editBuffer = {
-      translation: item.translation,
-      example: item.example || ''
-    };
-  }
 
-  saveEdit() {
-    if (this.editingItem) {
-      this.vocabService.updateWord(this.editingItem.id, this.editBuffer).subscribe({
-        next: () => {
-          this.editingItem = null;
-          this.notification.show('Đã cập nhật từ vựng!');
-        },
-        error: () => this.notification.show('Lỗi khi cập nhật', 'error')
-      });
-    }
-  }
 
   deleteItem(item: UserVocabulary) {
-    if (confirm(`Bạn có chắc muốn xóa "${item.word}"?`)) {
-      this.vocabService.deleteWord(item.id).subscribe({
-        next: () => this.notification.show(`Đã xóa "${item.word}"`),
-        error: () => this.notification.show('Lỗi khi xóa', 'error')
-      });
-    }
+    this.notification.confirm({
+      title: 'Xóa từ vựng?',
+      message: `Bạn có chắc muốn xóa "${item.word}" khỏi bộ sưu tập không?`,
+      confirmText: 'Xóa',
+      type: 'danger'
+    }).then(confirmed => {
+      if (confirmed) {
+        this.vocabService.deleteWord(item.id).subscribe({
+          next: () => this.notification.show(`Đã xóa "${item.word}"`),
+          error: () => this.notification.show('Lỗi khi xóa', 'error')
+        });
+      }
+    });
   }
 
   syncToCloud() {
@@ -448,11 +388,18 @@ export class VocabularyManagerComponent implements OnInit {
   }
 
   clearAll() {
-    if (confirm('Bạn có chắc muốn xóa TẤT CẢ từ vựng không? Hành động này không thể hoàn tác.')) {
-      localStorage.removeItem('user_vocabulary_guest');
-      this.vocabService.refreshVocabulary();
-      this.notification.show('Đã xóa bộ sưu tập từ vựng', 'info');
-    }
+    this.notification.confirm({
+      title: 'Xóa tất cả từ vựng?',
+      message: 'Hành động này sẽ xóa toàn bộ bộ sưu tập của bạn và không thể hoàn tác.',
+      confirmText: 'Xóa ngay',
+      type: 'danger'
+    }).then(confirmed => {
+      if (confirmed) {
+        localStorage.removeItem('user_vocabulary_guest');
+        this.vocabService.refreshVocabulary();
+        this.notification.show('Đã xóa bộ sưu tập từ vựng', 'info');
+      }
+    });
   }
 
   startStudy() {

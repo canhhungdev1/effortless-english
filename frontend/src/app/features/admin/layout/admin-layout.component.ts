@@ -4,16 +4,19 @@ import { RouterLink, RouterOutlet, RouterLinkActive } from '@angular/router';
 import { ToastComponent } from '../../../shared/components/toast/toast.component';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { AuthService } from '../../../core/auth/auth.service';
+import { NotificationService } from '../../../core/services/notification.service';
+import { ConfirmModalComponent } from '../../../shared/components/confirm-modal/confirm-modal.component';
 import { inject } from '@angular/core';
 
 
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ToastComponent, LoadingComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ToastComponent, LoadingComponent, ConfirmModalComponent],
   template: `
     <div class="admin-container" [class.collapsed]="isSidebarCollapsed()">
       <app-toast></app-toast>
+      <app-confirm-modal></app-confirm-modal>
       <app-loading></app-loading>
       <!-- Sidebar -->
       <aside class="sidebar">
@@ -326,6 +329,7 @@ import { inject } from '@angular/core';
 })
 export class AdminLayoutComponent {
   authService = inject(AuthService);
+  notification = inject(NotificationService);
   isSidebarCollapsed = signal(false);
 
   toggleSidebar() {
@@ -333,9 +337,16 @@ export class AdminLayoutComponent {
   }
 
   logout() {
-    if (confirm('Are you sure you want to logout?')) {
-      this.authService.logout();
-    }
+    this.notification.confirm({
+      title: 'Confirm Logout',
+      message: 'Are you sure you want to log out of the admin panel?',
+      confirmText: 'Logout',
+      type: 'danger'
+    }).then(confirmed => {
+      if (confirmed) {
+        this.authService.logout();
+      }
+    });
   }
 }
 

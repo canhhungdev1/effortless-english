@@ -5,14 +5,16 @@ import { HeaderComponent } from '../../components/header/header.component';
 import { ToastComponent } from '../../components/toast/toast.component';
 import { CommonModule } from '@angular/common';
 import { LoadingComponent } from '../../components/loading/loading.component';
+import { ConfirmModalComponent } from '../../components/confirm-modal/confirm-modal.component';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [RouterOutlet, SidebarComponent, HeaderComponent, ToastComponent, CommonModule, LoadingComponent],
+  imports: [RouterOutlet, SidebarComponent, HeaderComponent, ToastComponent, CommonModule, LoadingComponent, ConfirmModalComponent],
   template: `
     <div class="layout" [class.desktop-collapsed]="isDesktopCollapsed">
       <app-toast />
+      <app-confirm-modal />
       <app-loading />
       <div class="sidebar-overlay"
            [class.visible]="isMobileOpen"

@@ -9,53 +9,66 @@ import { NotificationService } from '../../../core/services/notification.service
   template: `
     <div class="toast-container" *ngIf="notification.toast$ | async as toast">
       <div class="toast" [class]="toast.type">
-        <span class="icon">
-          <svg *ngIf="toast.type === 'success'" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+        <div class="toast-icon">
+          <ng-container [ngSwitch]="toast.type">
+            <span *ngSwitchCase="'success'">✅</span>
+            <span *ngSwitchCase="'error'">❌</span>
+            <span *ngSwitchCase="'warning'">⚠️</span>
+            <span *ngSwitchCase="'info'">ℹ️</span>
+          </ng-container>
+        </div>
+        <div class="toast-content">
+          <p class="toast-message">{{ toast.message }}</p>
+        </div>
+        <button class="toast-close" (click)="close()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <path d="M18 6L6 18M6 6l12 12"/>
           </svg>
-          <svg *ngIf="toast.type === 'error'" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-          </svg>
-        </span>
-        <span class="message">{{ toast.message }}</span>
+        </button>
       </div>
     </div>
   `,
   styles: [`
     .toast-container {
-      position: fixed;
-      top: 24px;
-      right: 24px;
-      z-index: 9999;
-      pointer-events: none;
-      animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: fixed; top: 32px; right: 32px; z-index: 10000;
+      pointer-events: none; perspective: 1000px;
     }
 
     .toast {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 20px;
-      background: var(--bg-white);
-      border-radius: var(--radius-lg);
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-      border: 1px solid var(--border-light);
-      pointer-events: auto;
+      display: flex; align-items: center; gap: 16px; min-width: 320px; max-width: 450px;
+      padding: 16px 20px; border-radius: 20px; pointer-events: auto;
+      background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05);
+      animation: toastIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      border-left: 6px solid #cbd5e1;
     }
 
-    .toast.success { border-left: 4px solid #10b981; color: #065f46; }
-    .toast.error { border-left: 4px solid #ef4444; color: #991b1b; }
-    .toast.info { border-left: 4px solid var(--primary); color: var(--primary); }
+    .toast.success { border-left-color: #10b981; }
+    .toast.error { border-left-color: #ef4444; }
+    .toast.warning { border-left-color: #f59e0b; }
+    .toast.info { border-left-color: #3b82f6; }
 
-    .icon { display: flex; align-items: center; justify-content: center; }
-    .message { font-size: 14px; font-weight: 500; }
+    .toast-icon { font-size: 20px; flex-shrink: 0; }
+    .toast-content { flex: 1; }
+    .toast-message { font-size: 14px; font-weight: 700; color: #1e293b; margin: 0; line-height: 1.4; }
 
-    @keyframes slideIn {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
+    .toast-close {
+      background: #f1f5f9; border: none; color: #64748b; width: 24px; height: 24px;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.2s;
+      &:hover { background: #e2e8f0; color: #1e293b; transform: scale(1.1); }
+    }
+
+    @keyframes toastIn {
+      from { transform: translateX(100%) scale(0.8) rotateY(-10deg); opacity: 0; }
+      to { transform: translateX(0) scale(1) rotateY(0); opacity: 1; }
     }
   `]
 })
 export class ToastComponent {
   notification = inject(NotificationService);
+
+  close() {
+    (this.notification as any).toastSubject.next(null);
+  }
 }
