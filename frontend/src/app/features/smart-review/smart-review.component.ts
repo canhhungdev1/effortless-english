@@ -111,7 +111,7 @@ import { map, distinctUntilChanged, take } from 'rxjs';
         <div class="action-panel">
           <div class="panel-header">
             <h2>Daily Review Session</h2>
-            <p>We've prepared a customized list of words for you based on the SM-2 algorithm.</p>
+            <p>Strengthen your memory with a customized session based on the SM-2 algorithm.</p>
           </div>
           
           <div class="action-box">
@@ -126,7 +126,7 @@ import { map, distinctUntilChanged, take } from 'rxjs';
                 <div class="empty-sync">
                   <div class="empty-icon">✨</div>
                   <h3>You're brilliant!</h3>
-                  <p>You have no words due for review right now. Come back later or start a practice session with all your words.</p>
+                  <p>You have no words due for review right now. Come back later or start a practice session.</p>
                   <button class="primary-btn start-btn" (click)="startReview('all')">
                     Practice All Words
                   </button>
@@ -141,14 +141,14 @@ import { map, distinctUntilChanged, take } from 'rxjs';
             <div *ngFor="let item of displayStats.forecast" class="bar-group">
               <div class="bar-container">
                 <div class="bar" [style.height.%]="getBarHeight(item.count)">
-                  <span class="bar-tooltip">{{ item.count }} words</span>
+                  <span class="bar-tooltip"><strong>{{ item.count }}</strong> words</span>
                 </div>
               </div>
               <span class="bar-label">{{ item.date | date:'EEE' }}</span>
             </div>
           </div>
           <div class="forecast-note">
-             Estimated number of words that will become due by the end of each day.
+             Estimated number of words that will become due.
           </div>
         </div>
       </div>
@@ -233,28 +233,95 @@ import { map, distinctUntilChanged, take } from 'rxjs';
     .stat-item:hover .premium-tooltip { opacity: 1; transform: translateX(-50%) translateY(0); }
     .stat-divider { width: 1px; background: var(--border-color); margin: 4px 0; }
 
-    .main-layout { display: grid; grid-template-columns: 1fr 340px; gap: 40px; }
+    .main-layout { display: grid; grid-template-columns: 1fr 340px; gap: 32px; }
+    
     .action-panel { background: white; border-radius: 32px; border: 1px solid var(--border-color); padding: 40px; display: flex; flex-direction: column; gap: 32px; box-shadow: var(--shadow-sm); }
-    .panel-header h2 { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
-    .action-box { flex: 1; min-height: 300px; background: #f8fafc; border-radius: 24px; border: 2px dashed #e2e8f0; display: flex; align-items: center; justify-content: center; text-align: center; }
-    .count-big { font-size: 80px; font-weight: 900; color: var(--text-primary); line-height: 1; will-change: transform; }
-    .count-unit { font-size: 18px; font-weight: 600; color: var(--text-muted); margin-bottom: 32px; }
-    .start-btn { padding: 20px 60px; font-size: 18px; font-weight: 800; border-radius: 20px; box-shadow: 0 10px 25px rgba(var(--primary-rgb), 0.3); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); &:hover { transform: translateY(-3px) scale(1.02); } }
+    .action-panel .panel-header h2 { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+    .action-panel .panel-header p { color: var(--text-muted); font-size: 15px; }
 
-    .forecast-panel { background: #f8fafc; border-radius: 32px; padding: 32px; border: 1px solid var(--border-color); }
-    .forecast-panel h3 { font-size: 16px; font-weight: 800; margin-bottom: 24px; text-transform: uppercase; color: var(--text-muted); }
+    .action-box { flex: 1; min-height: 280px; background: #f8fafc; border-radius: 24px; border: 2px dashed #e2e8f0; display: flex; align-items: center; justify-content: center; text-align: center; }
+    .due-info { display: flex; flex-direction: column; align-items: center; }
+    .count-big { font-size: 80px; font-weight: 900; color: var(--text-primary); line-height: 1; margin-bottom: 8px; }
+    .count-unit { font-size: 16px; font-weight: 600; color: var(--text-muted); margin-bottom: 32px; }
+    .start-btn { padding: 18px 48px; font-size: 18px; font-weight: 800; border-radius: 16px; box-shadow: 0 10px 25px rgba(var(--primary-rgb), 0.2); }
+
+    .empty-sync { padding: 40px; }
+    .empty-icon { font-size: 48px; margin-bottom: 16px; }
+
+    .forecast-panel { background: white; border-radius: 32px; padding: 32px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; }
+    .forecast-panel h3 { font-size: 14px; font-weight: 800; margin-bottom: 24px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; }
     .forecast-chart { display: flex; align-items: flex-end; justify-content: space-between; height: 160px; margin-bottom: 24px; }
-    .bar-container { width: 12px; height: 120px; background: #e2e8f0; border-radius: 10px; position: relative; display: flex; align-items: flex-end; overflow: hidden; }
-    .bar { width: 100%; background: linear-gradient(to top, var(--primary), #818cf8); border-radius: 10px; transition: height 1.2s cubic-bezier(0.19, 1, 0.22, 1); position: relative; will-change: height; &:hover { filter: brightness(1.1); .bar-tooltip { opacity: 1; transform: translateX(-50%) translateY(-10px); } } }
-    .bar-tooltip { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%) translateY(0); background: #1e293b; color: white; padding: 4px 8px; border-radius: 6px; font-size: 10px; opacity: 0; transition: all 0.2s; z-index: 10; }
-    .forecast-note { font-size: 12px; color: #94a3b8; font-style: italic; }
+    .bar-group { display: flex; flex-direction: column; align-items: center; gap: 12px; flex: 1; }
+    .bar-container { 
+      width: 12px; height: 120px; background: #f1f5f9; border-radius: 10px; 
+      position: relative; display: flex; align-items: flex-end; cursor: pointer;
+      &:hover { .bar { filter: brightness(1.1); } .bar-tooltip { opacity: 1; transform: translateX(-50%) translateY(-10px); } }
+    }
+    .bar { 
+      width: 100%; background: linear-gradient(to top, var(--primary), #818cf8); 
+      border-radius: 10px; transition: height 1.2s cubic-bezier(0.19, 1, 0.22, 1); 
+      position: relative; will-change: height; 
+    }
+    .bar-tooltip { 
+      position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%) translateY(0); 
+      background: #1e293b; color: white; padding: 6px 12px; border-radius: 8px; 
+      font-size: 11px; white-space: nowrap; opacity: 0; transition: all 0.2s; 
+      z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15); pointer-events: none;
+      &::after {
+        content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+        border: 5px solid transparent; border-top-color: #1e293b;
+      }
+      strong { color: var(--primary-light); }
+    }
+    .bar-label { font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; }
+    .forecast-note { font-size: 11px; color: #94a3b8; text-align: center; font-style: italic; }
 
     .heatmap-section { margin-top: 40px; animation: slideUp 0.8s cubic-bezier(0.23, 1, 0.32, 1); }
     @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     .fade-in { animation: fadeIn 0.8s ease-out; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-    @media (max-width: 1024px) { .main-layout { grid-template-columns: 1fr; } }
+    @media (max-width: 1024px) {
+      .review-container { padding: 30px 20px; }
+      .main-layout { grid-template-columns: 1fr; gap: 24px; }
+      .action-panel { padding: 32px; }
+    }
+
+    @media (max-width: 768px) {
+      .header-section { flex-direction: column; gap: 24px; align-items: stretch; }
+      .header-actions { justify-content: flex-start; width: 100%; }
+      .title { font-size: 28px; }
+      .subtitle { font-size: 16px; }
+      
+      .stats-bar { flex-direction: column; padding: 10px; }
+      .stat-item { padding: 16px 20px; border-bottom: 1px solid #f1f5f9; }
+      .stat-item:last-child { border-bottom: none; }
+      .stat-divider { display: none; }
+      
+      .count-big { font-size: 64px; }
+      .start-btn { width: 100%; padding: 16px; }
+      
+      .forecast-chart { padding: 0 10px; height: 140px; }
+      .bar-container { width: 10px; }
+      .bar-label { font-size: 11px; }
+
+      .premium-tooltip { width: 220px; left: 0; transform: translateY(10px); }
+      .stat-item:hover .premium-tooltip { transform: translateY(0); }
+    }
+
+    @media (max-width: 480px) {
+      .review-container { padding: 20px 12px; }
+      .header-actions { flex-direction: column; align-items: stretch; }
+      .manage-btn { justify-content: center; width: 100%; }
+      .refresh-btn { width: 100%; }
+      
+      .stat-num { font-size: 24px; }
+      .stat-label { font-size: 11px; }
+      
+      .forecast-panel { padding: 20px; }
+      .forecast-chart { height: 120px; gap: 4px; }
+      .bar-container { width: 6px; }
+    }
   `]
 })
 export class SmartReviewComponent implements OnInit, OnDestroy {
