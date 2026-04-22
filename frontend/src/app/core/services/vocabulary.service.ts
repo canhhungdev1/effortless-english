@@ -29,12 +29,12 @@ export class VocabularyService {
         // Automatically sync local guest data if it exists when user logs in
         this.syncToCloud().pipe(
           switchMap(() => {
-            this.refreshVocabulary();
+            this.refreshVocabulary(true);
             return of(null);
           })
         ).subscribe();
       } else {
-        this.refreshVocabulary();
+        this.refreshVocabulary(true);
       }
     });
   }

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { VocabularyService } from '../../core/services/vocabulary.service';
@@ -13,7 +13,7 @@ import { map, distinctUntilChanged, take } from 'rxjs';
   standalone: true,
   imports: [CommonModule, RouterLink, FlashcardSessionComponent, HeatmapComponent],
   template: `
-    <div class="review-container fade-in" [class.is-loading]="!stats">
+    <div class="review-container fade-in">
       <div class="header-section">
         <div class="header-content">
           <h1 class="title">Smart Review Vocabulary</h1>
@@ -40,12 +40,6 @@ import { map, distinctUntilChanged, take } from 'rxjs';
             </svg>
           </button>
         </div>
-      </div>
-
-      <!-- Loading Overlay -->
-      <div class="loading-overlay" *ngIf="!stats">
-        <div class="loader"></div>
-        <p>Connecting to your personal collection...</p>
       </div>
 
       <!-- Stats Dashboard -->
@@ -121,7 +115,7 @@ import { map, distinctUntilChanged, take } from 'rxjs';
           </div>
           
           <div class="action-box">
-             <div class="due-info" *ngIf="stats.dueCount > 0; else nothingDue">
+             <div class="due-info" *ngIf="stats && stats.dueCount > 0; else nothingDue">
                 <div class="count-big">{{ displayStats.dueCount }}</div>
                 <div class="count-unit">Words waiting for you</div>
                 <button class="primary-btn start-btn" (click)="startReview('due')">
@@ -133,7 +127,7 @@ import { map, distinctUntilChanged, take } from 'rxjs';
                   <div class="empty-icon">✨</div>
                   <h3>You're brilliant!</h3>
                   <p>You have no words due for review right now. Come back later or start a practice session with all your words.</p>
-                  <button class="secondary-btn" (click)="startReview('all')">
+                  <button class="primary-btn start-btn" (click)="startReview('all')">
                     Practice All Words
                   </button>
                 </div>
@@ -141,10 +135,10 @@ import { map, distinctUntilChanged, take } from 'rxjs';
           </div>
         </div>
 
-        <div class="forecast-panel">
+        <div class="forecast-panel" *ngIf="displayStats.forecast">
           <h3>7-Day Workload Forecast</h3>
           <div class="forecast-chart">
-            <div *ngFor="let item of stats.forecast" class="bar-group">
+            <div *ngFor="let item of displayStats.forecast" class="bar-group">
               <div class="bar-container">
                 <div class="bar" [style.height.%]="getBarHeight(item.count)">
                   <span class="bar-tooltip">{{ item.count }} words</span>
@@ -171,7 +165,7 @@ import { map, distinctUntilChanged, take } from 'rxjs';
     </app-flashcard-session>
   `,
   styles: [`
-    .review-container { max-width: 1100px; margin: 0 auto; padding: 40px 20px; }
+    .review-container { max-width: 1100px; margin: 0 auto; padding: 40px 20px; will-change: opacity; }
     .header-section { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
     .header-actions { display: flex; align-items: center; gap: 12px; }
     
@@ -207,23 +201,20 @@ import { map, distinctUntilChanged, take } from 'rxjs';
     .title { font-size: 36px; font-weight: 850; letter-spacing: -1px; color: var(--text-primary); margin-bottom: 8px; }
     .subtitle { color: var(--text-muted); font-size: 18px; }
 
-    .loading-overlay { height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; color: var(--text-muted); font-weight: 600; }
-    .loader { width: 48px; height: 48px; border: 5px solid var(--bg-gray); border-bottom-color: var(--primary); border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; }
-    @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
     .stats-bar { display: flex; align-items: stretch; background: white; border-radius: 20px; border: 1px solid var(--border-color); padding: 20px 0; margin-bottom: 32px; box-shadow: var(--shadow-sm); }
     .stat-item { flex: 1; padding: 0 28px; display: flex; flex-direction: column; gap: 10px; position: relative; &.clickable { cursor: pointer; transition: background 0.2s; border-radius: 12px; &:hover { background: #f8fafc; } } }
     .stat-top { display: flex; align-items: center; gap: 12px; }
     .stat-icon-sm { font-size: 22px; }
     .stat-info { display: flex; align-items: baseline; gap: 8px; }
-    .stat-num { font-size: 28px; font-weight: 900; color: var(--text-primary); line-height: 1; }
+    .stat-num { font-size: 28px; font-weight: 900; color: var(--text-primary); line-height: 1; min-width: 1.5ch; }
     .stat-label { font-size: 13px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); }
     
     .stat-progress { height: 6px; background: #f1f5f9; border-radius: 3px; overflow: hidden; display: flex; margin-top: 4px; }
     .stat-progress-fill { 
       height: 100%; border-radius: 3px; 
-      transition: width 1.5s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease; 
+      transition: width 1s cubic-bezier(0.23, 1, 0.32, 1);
       box-shadow: 0 0 10px rgba(0,0,0,0.05);
+      will-change: width;
     }
     .due-fill { background: linear-gradient(90deg, #ef4444, #f97316); }
     .learning-fill { background: linear-gradient(90deg, #3b82f6, #6366f1); }
@@ -246,27 +237,27 @@ import { map, distinctUntilChanged, take } from 'rxjs';
     .action-panel { background: white; border-radius: 32px; border: 1px solid var(--border-color); padding: 40px; display: flex; flex-direction: column; gap: 32px; box-shadow: var(--shadow-sm); }
     .panel-header h2 { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
     .action-box { flex: 1; min-height: 300px; background: #f8fafc; border-radius: 24px; border: 2px dashed #e2e8f0; display: flex; align-items: center; justify-content: center; text-align: center; }
-    .count-big { font-size: 80px; font-weight: 900; color: var(--text-primary); line-height: 1; }
+    .count-big { font-size: 80px; font-weight: 900; color: var(--text-primary); line-height: 1; will-change: transform; }
     .count-unit { font-size: 18px; font-weight: 600; color: var(--text-muted); margin-bottom: 32px; }
-    .start-btn { padding: 20px 60px; font-size: 18px; font-weight: 800; border-radius: 20px; box-shadow: 0 10px 25px rgba(var(--primary-rgb), 0.3); }
+    .start-btn { padding: 20px 60px; font-size: 18px; font-weight: 800; border-radius: 20px; box-shadow: 0 10px 25px rgba(var(--primary-rgb), 0.3); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); &:hover { transform: translateY(-3px) scale(1.02); } }
 
     .forecast-panel { background: #f8fafc; border-radius: 32px; padding: 32px; border: 1px solid var(--border-color); }
     .forecast-panel h3 { font-size: 16px; font-weight: 800; margin-bottom: 24px; text-transform: uppercase; color: var(--text-muted); }
     .forecast-chart { display: flex; align-items: flex-end; justify-content: space-between; height: 160px; margin-bottom: 24px; }
-    .bar-container { width: 12px; height: 120px; background: #e2e8f0; border-radius: 10px; position: relative; display: flex; align-items: flex-end; }
-    .bar { width: 100%; background: linear-gradient(to top, var(--primary), #818cf8); border-radius: 10px; transition: height 1s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; &:hover { filter: brightness(1.1); .bar-tooltip { opacity: 1; transform: translateX(-50%) translateY(-10px); } } }
+    .bar-container { width: 12px; height: 120px; background: #e2e8f0; border-radius: 10px; position: relative; display: flex; align-items: flex-end; overflow: hidden; }
+    .bar { width: 100%; background: linear-gradient(to top, var(--primary), #818cf8); border-radius: 10px; transition: height 1.2s cubic-bezier(0.19, 1, 0.22, 1); position: relative; will-change: height; &:hover { filter: brightness(1.1); .bar-tooltip { opacity: 1; transform: translateX(-50%) translateY(-10px); } } }
     .bar-tooltip { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%) translateY(0); background: #1e293b; color: white; padding: 4px 8px; border-radius: 6px; font-size: 10px; opacity: 0; transition: all 0.2s; z-index: 10; }
     .forecast-note { font-size: 12px; color: #94a3b8; font-style: italic; }
 
-    .heatmap-section { margin-top: 40px; animation: slideUp 0.6s ease-out; }
-    @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    .fade-in { animation: fadeIn 0.5s ease-out; }
+    .heatmap-section { margin-top: 40px; animation: slideUp 0.8s cubic-bezier(0.23, 1, 0.32, 1); }
+    @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .fade-in { animation: fadeIn 0.8s ease-out; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
     @media (max-width: 1024px) { .main-layout { grid-template-columns: 1fr; } }
   `]
 })
-export class SmartReviewComponent implements OnInit {
+export class SmartReviewComponent implements OnInit, OnDestroy {
   public vocabService = inject(VocabularyService);
   private auth = inject(AuthService);
   private notification = inject(NotificationService);
@@ -278,53 +269,91 @@ export class SmartReviewComponent implements OnInit {
   showStudyModal = false;
   studySessionWords: any[] = [];
   studyStats: any = null;
-  private animationTimer: any;
+  
+  private rafId?: number;
 
   ngOnInit() {
     this.vocabService.stats$.pipe(
       distinctUntilChanged((p, c) => !p || !c ? false : p.dueCount===c.dueCount && p.totalCount===c.totalCount)
     ).subscribe(s => { if (s) { this.stats = s; this.animateStats(s); } });
-    this.vocabService.getStudyStats().subscribe(stats => { this.studyStats = stats; });
+    this.vocabService.getStudyStats(true).subscribe(stats => { this.studyStats = stats; });
     this.syncData();
   }
 
-  animateStats(target: any) {
-    if (this.animationTimer) clearInterval(this.animationTimer);
-    this.displayStats.dueCount = 0; this.displayStats.totalCount = 0; this.displayStats.masteredCount = 0;
-    this.displayStats.forecast = target.forecast;
-    this.cd.detectChanges();
-
-    setTimeout(() => {
-      const duration = 1200; const steps = 60; const interval = duration / steps;
-      let currentStep = 0;
-      this.animationTimer = setInterval(() => {
-        currentStep++;
-        const progress = this.easeOutQuad(currentStep / steps);
-        this.displayStats.dueCount = Math.round((target.dueCount || 0) * progress);
-        this.displayStats.totalCount = Math.round((target.totalCount || 0) * progress);
-        this.displayStats.masteredCount = Math.round((target.masteredCount || 0) * progress);
-        this.cd.detectChanges();
-        if (currentStep >= steps) { clearInterval(this.animationTimer); this.displayStats = { ...target }; this.cd.detectChanges(); }
-      }, interval);
-    }, 100);
+  ngOnDestroy() {
+    if (this.rafId) cancelAnimationFrame(this.rafId);
   }
 
-  private easeOutQuad(t: number): number { return t * (2 - t); }
+  animateStats(target: any) {
+    if (this.rafId) cancelAnimationFrame(this.rafId);
+    
+    const startDue = this.displayStats.dueCount;
+    const startTotal = this.displayStats.totalCount;
+    const startMastered = this.displayStats.masteredCount;
+    
+    const targetDue = target.dueCount || 0;
+    const targetTotal = target.totalCount || 0;
+    const targetMastered = target.masteredCount || 0;
+    const targetForecast = target.forecast || [];
+
+    // Initialize/Reset forecast for animation if counts are currently zero
+    if (this.displayStats.forecast.length === 0) {
+      this.displayStats.forecast = targetForecast.map((f: any) => ({ ...f, count: 0 }));
+    }
+
+    const duration = 1200;
+    const startTime = performance.now();
+
+    const frame = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const ease = this.easeOutExpo(progress);
+
+      this.displayStats.dueCount = Math.round(startDue + (targetDue - startDue) * ease);
+      this.displayStats.totalCount = Math.round(startTotal + (targetTotal - startTotal) * ease);
+      this.displayStats.masteredCount = Math.round(startMastered + (targetMastered - startMastered) * ease);
+      
+      this.displayStats.forecast = targetForecast.map((f: any, idx: number) => ({
+        ...f,
+        count: Math.round((f.count || 0) * ease)
+      }));
+
+      this.cd.detectChanges();
+
+      if (progress < 1) {
+        this.rafId = requestAnimationFrame(frame);
+      } else {
+        this.displayStats = JSON.parse(JSON.stringify(target));
+        this.cd.detectChanges();
+      }
+    };
+
+    this.rafId = requestAnimationFrame(frame);
+  }
+
+  private easeOutExpo(t: number): number {
+    return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+  }
+
   goToVocabulary(filter: string) { this.router.navigate(['/flashcards'], { queryParams: { filter } }); }
+  
   syncData() {
-    this.vocabService.refreshVocabulary();
+    this.vocabService.refreshVocabulary(true);
     this.vocabService.getStudyStats(true).subscribe(stats => { this.studyStats = stats; });
   }
+
   getBarHeight(count: number): number {
-    if (!this.stats || this.stats.totalCount === 0) return 0;
-    const max = Math.max(...this.stats.forecast.map((f: any) => f.count), 1);
-    return (count / max) * 100;
+    if (!this.stats || this.stats.totalCount === 0 || !this.stats.forecast) return 0;
+    const max = Math.max(...this.stats.forecast.map((f: any) => f.count || 0), 10);
+    return Math.min((count / max) * 100, 100);
   }
+
   startReview(mode: 'due' | 'all') {
     this.vocabService.vocab$.pipe(take(1), map(v => mode === 'due' ? v.filter(w => new Date(w.next_review) <= new Date()) : v)).subscribe(words => {
       if (words.length === 0) { this.notification.show('No words to practice!'); return; }
       this.studySessionWords = words; this.showStudyModal = true;
     });
   }
+
   onSessionClose() { this.showStudyModal = false; this.syncData(); }
 }
