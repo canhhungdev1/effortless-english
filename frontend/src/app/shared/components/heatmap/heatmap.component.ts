@@ -23,27 +23,35 @@ import { CommonModule } from '@angular/common';
       </div>
       
       <div class="heatmap-scroll">
-        <div class="heatmap-grid" [style.grid-template-columns]="'repeat(' + weeks.length + ', 1fr)'">
-          <div class="week-column" *ngFor="let week of weeks">
-            <div 
-              *ngFor="let day of week" 
-              class="day-cell" 
-              [class]="'level-' + getLevel(day.count)"
-              [title]="day.date + ': ' + day.count + ' reviews'"
-            ></div>
+        <div class="heatmap-wrapper">
+          <div class="heatmap-grid" [style.grid-template-columns]="'repeat(' + weeks.length + ', 1fr)'">
+            <div class="week-column" *ngFor="let week of weeks">
+              <div 
+                *ngFor="let day of week" 
+                class="day-cell" 
+                [class]="'level-' + getLevel(day.count)"
+                [title]="day.date + ': ' + day.count + ' reviews'"
+              ></div>
+            </div>
+          </div>
+          
+          <div class="month-labels" [style.grid-template-columns]="'repeat(' + weeks.length + ', 1fr)'">
+            <span 
+              *ngFor="let month of monthLabels" 
+              [style.grid-column-start]="month.weekIdx + 1"
+              class="month-name"
+            >
+              {{ month.name }}
+            </span>
           </div>
         </div>
-      </div>
-
-      <div class="month-labels">
-        <span *ngFor="let month of monthLabels" [style.left.%]="month.pos">{{ month.name }}</span>
       </div>
     </div>
   `,
   styles: [`
     .heatmap-container {
       background: white; border: 1px solid #e2e8f0; border-radius: 20px; padding: 24px;
-      width: 100%; overflow: hidden;
+      width: 100%; overflow: hidden; box-shadow: var(--shadow-sm);
     }
     .heatmap-header {
       display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
@@ -57,28 +65,39 @@ import { CommonModule } from '@angular/common';
     .cell { width: 10px; height: 10px; border-radius: 2px; }
     
     .heatmap-scroll { 
-      overflow-x: auto; padding-bottom: 10px; 
+      overflow-x: auto; padding-bottom: 10px; margin: 0 -10px;
       &::-webkit-scrollbar { height: 6px; }
+      &::-webkit-scrollbar-track { background: transparent; }
       &::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+    }
+
+    .heatmap-wrapper {
+      min-width: 800px; padding: 0 10px;
     }
     
     .heatmap-grid {
-      display: grid; gap: 4px; min-width: 800px;
+      display: grid; gap: 4px; margin-bottom: 12px;
     }
     .week-column {
       display: grid; grid-template-rows: repeat(7, 1fr); gap: 4px;
     }
     
     .day-cell {
-      width: 12px; height: 12px; border-radius: 2px;
-      background: #f1f5f9; transition: transform 0.2s;
-      cursor: pointer;
-      &:hover { transform: scale(1.3); z-index: 10; border: 1px solid rgba(0,0,0,0.1); }
+      aspect-ratio: 1/1; width: 100%; border-radius: 2px;
+      background: #f1f5f9; transition: all 0.2s;
+      cursor: pointer; border: 1px solid rgba(0,0,0,0.02);
+      &:hover { transform: scale(1.3); z-index: 10; border-color: rgba(0,0,0,0.1); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
     }
 
     .month-labels {
-      position: relative; height: 20px; margin-top: 8px; font-size: 11px; color: #94a3b8;
-      span { position: absolute; transform: translateX(-50%); }
+      display: grid; gap: 4px; height: 20px; margin-top: 12px; 
+      font-size: 10px; font-weight: 700; color: #94a3b8;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      align-items: start; /* Align to the top of the label row */
+    }
+    .month-name { 
+      grid-row: 1; /* Force all labels to stay on the first row */
+      white-space: nowrap;
     }
 
     .level-0 { background: #f1f5f9; }
@@ -92,7 +111,7 @@ export class HeatmapComponent implements OnChanges {
   @Input() data: { date: string, count: number }[] = [];
   
   weeks: any[][] = [];
-  monthLabels: { name: string, pos: number }[] = [];
+  monthLabels: { name: string, weekIdx: number }[] = [];
 
   ngOnChanges() {
     this.generateGrid();
@@ -139,7 +158,7 @@ export class HeatmapComponent implements OnChanges {
     this.weeks = weeks;
     this.monthLabels = months.map(m => ({
       name: m.name,
-      pos: (m.weekIdx / 53) * 100
+      weekIdx: m.weekIdx
     }));
   }
 

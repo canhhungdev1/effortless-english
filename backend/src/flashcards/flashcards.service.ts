@@ -193,9 +193,12 @@ export class FlashcardsService {
         interval = Math.round(interval * ease_factor);
       }
       repetitions++;
-    } else { // Hard or Again (Low rating)
+    } else if (rating === 1) { // Hard
       repetitions = 0;
       interval = 1;
+    } else { // Again
+      repetitions = 0;
+      interval = 0;
     }
 
     // Update Ease Factor (Simplified SM-2)

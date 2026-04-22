@@ -62,7 +62,7 @@ import { FlashcardSessionComponent } from '../../shared/components/flashcards/fl
       </div>
 
       <div class="vocab-grid" *ngIf="filteredVocab.length > 0; else emptyState">
-        <div class="vocab-card" *ngFor="let item of filteredVocab">
+        <div class="vocab-card" *ngFor="let item of displayedVocab">
           <div class="card-top">
             <div class="word-info">
               <h3 class="word-text">{{ item.word }}</h3>
@@ -105,6 +105,14 @@ import { FlashcardSessionComponent } from '../../shared/components/flashcards/fl
             </button>
           </div>
         </div>
+      </div>
+      
+      <!-- Load More Pagination -->
+      <div class="pagination-area" *ngIf="filteredVocab.length > itemsToShow">
+        <button class="load-more-btn" (click)="loadMore()">
+          <span class="btn-text">Load More</span>
+          <span class="count-badge">{{ filteredVocab.length - itemsToShow }} words left</span>
+        </button>
       </div>
 
       <ng-template #emptyState>
@@ -255,6 +263,19 @@ import { FlashcardSessionComponent } from '../../shared/components/flashcards/fl
       &:hover.delete { background: #fef2f2; color: #ef4444; }
     }
 
+    .pagination-area {
+      margin-top: 48px; display: flex; justify-content: center; padding-bottom: 40px;
+    }
+    .load-more-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      padding: 16px 48px; border-radius: 20px; background: white;
+      border: 1px solid var(--border-color); cursor: pointer; transition: var(--transition);
+      box-shadow: var(--shadow-sm);
+      &:hover { border-color: var(--primary); transform: translateY(-4px); box-shadow: var(--shadow-md); .btn-text { color: var(--primary); } }
+      .btn-text { font-size: 16px; font-weight: 800; color: var(--text-primary); }
+      .count-badge { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+    }
+
     .empty-state {
       padding: 80px 20px; text-align: center; background: var(--bg-white);
       border: 2px dashed var(--border-light); border-radius: var(--radius-xl);
@@ -297,6 +318,9 @@ export class VocabularyManagerComponent implements OnInit {
   filteredVocab: UserVocabulary[] = [];
   searchQuery = '';
   activeFilter = 'all';
+  
+  pageSize = 12;
+  itemsToShow = 12;
 
   showStudyModal = false;
   studySessionWords: any[] = [];
@@ -327,7 +351,16 @@ export class VocabularyManagerComponent implements OnInit {
     });
   }
 
+  get displayedVocab() {
+    return this.filteredVocab.slice(0, this.itemsToShow);
+  }
+
+  loadMore() {
+    this.itemsToShow += this.pageSize;
+  }
+
   updateFilters() {
+    this.itemsToShow = this.pageSize; // Reset pagination
     let result = [...this.allVocab];
 
     // Search

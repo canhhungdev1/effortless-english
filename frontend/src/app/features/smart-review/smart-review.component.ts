@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { VocabularyService } from '../../core/services/vocabulary.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { AuthService } from '../../core/auth/auth.service';
@@ -11,7 +11,7 @@ import { map, distinctUntilChanged, take } from 'rxjs';
 @Component({
   selector: 'app-smart-review',
   standalone: true,
-  imports: [CommonModule, RouterLink, FlashcardSessionComponent, HeatmapComponent],
+  imports: [CommonModule, FlashcardSessionComponent, HeatmapComponent],
   template: `
     <div class="review-container fade-in">
       <div class="header-section">
@@ -19,28 +19,15 @@ import { map, distinctUntilChanged, take } from 'rxjs';
           <h1 class="title">Smart Review Vocabulary</h1>
           <p class="subtitle">Optimize your memory using Spaced Repetition (SRS).</p>
         </div>
-        <div class="header-actions">
-          <!-- Streak Badge -->
-          <div class="streak-badge" *ngIf="studyStats?.streak > 0" title="Daily Streak">
-             <span class="streak-icon">🔥</span>
-             <span class="streak-count">{{ studyStats.streak }}</span>
-             <span class="streak-label">Days</span>
-           </div>
-
-          <button class="secondary-btn manage-btn" routerLink="/flashcards">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
-            </svg>
-            Manage Vocabulary
-          </button>
-          
-          <button class="icon-btn refresh-btn" (click)="syncData()" [title]="'Refresh Data'" [class.spinning]="!stats">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-            </svg>
-          </button>
+          <div class="header-actions">
+            <!-- Streak Badge -->
+            <div class="streak-badge" *ngIf="studyStats?.streak > 0" title="Daily Streak">
+               <span class="streak-icon">🔥</span>
+               <span class="streak-count">{{ studyStats.streak }}</span>
+               <span class="streak-label">Days</span>
+             </div>
+          </div>
         </div>
-      </div>
 
       <!-- Stats Dashboard -->
       <div class="stats-bar" *ngIf="stats">
@@ -179,24 +166,7 @@ import { map, distinctUntilChanged, take } from 'rxjs';
     }
     @keyframes streakPop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-    .manage-btn {
-      display: flex; align-items: center; gap: 8px; padding: 10px 18px;
-      background: white; border: 1px solid var(--border-color); border-radius: 12px;
-      color: var(--text-primary); font-size: 14px; font-weight: 700;
-      cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: var(--shadow-sm);
-      svg { transition: transform 0.3s; }
-      &:hover { background: #f8fafc; border-color: var(--primary-light); color: var(--primary); transform: translateY(-2px); box-shadow: var(--shadow-md); svg { transform: translateX(-2px); } }
-    }
-
-    .refresh-btn { 
-      background: white; border: 1px solid var(--border-color); color: var(--text-muted);
-      width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
-      cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      &:hover { color: var(--primary); border-color: var(--primary-light); transform: rotate(30deg); box-shadow: var(--shadow-sm); }
-      &.spinning svg { animation: spin 1s linear infinite; }
-    }
-    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes streakPop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
     .title { font-size: 36px; font-weight: 850; letter-spacing: -1px; color: var(--text-primary); margin-bottom: 8px; }
     .subtitle { color: var(--text-muted); font-size: 18px; }
