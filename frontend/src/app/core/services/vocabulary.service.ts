@@ -39,17 +39,19 @@ export class VocabularyService {
     });
   }
 
-  refreshVocabulary(skipLoading: boolean = false) {
-    this.refreshStats(); // Always refresh stats when vocabulary is refreshed
-    
+  refreshVocabulary(skipLoading: boolean = false): Observable<any> {
     if (this.auth.isLoggedIn()) {
       const context = skipLoading ? new HttpContext().set(SKIP_LOADING, true) : new HttpContext();
-      this.http.get<UserVocabulary[]>(`${this.apiUrl}/all`, { context }).subscribe(data => {
-        this.vocabSubject.next(data);
-      });
+      return this.http.get<UserVocabulary[]>(`${this.apiUrl}/all`, { context }).pipe(
+        tap(data => {
+          this.vocabSubject.next(data);
+        }),
+        switchMap(() => this.getReviewStats(skipLoading))
+      );
     } else {
       const localData = this.getLocalVocab();
       this.vocabSubject.next(localData);
+      return this.getReviewStats(skipLoading);
     }
   }
 
@@ -244,8 +246,8 @@ export class VocabularyService {
     );
   }
 
-  refreshStats(silent: boolean = true) {
-    this.getReviewStats(silent).subscribe();
+  refreshStats(silent: boolean = true): Observable<any> {
+    return this.getReviewStats(silent);
   }
 
   syncToCloud(): Observable<any> {

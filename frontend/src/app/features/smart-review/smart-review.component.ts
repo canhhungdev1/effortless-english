@@ -375,7 +375,7 @@ export class SmartReviewComponent implements OnInit, OnDestroy {
   goToVocabulary(filter: string) { this.router.navigate(['/flashcards'], { queryParams: { filter } }); }
   
   syncData() {
-    this.vocabService.refreshVocabulary(true);
+    this.vocabService.refreshVocabulary(true).subscribe();
     this.vocabService.getStudyStats(true).subscribe(stats => { this.studyStats = stats; });
   }
 

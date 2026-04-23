@@ -35,21 +35,27 @@ export class FlashcardsService {
       }
     });
 
-    // Generate 7-day forecast
+    // Generate 7-day forecast (Daily New Due counts)
     const forecast: { date: string, count: number }[] = [];
     for (let i = 0; i < 7; i++) {
-        const date = new Date(now);
-        date.setDate(date.getDate() + i);
-        date.setHours(23, 59, 59, 999); // End of the day
+        const start = new Date(now);
+        start.setDate(start.getDate() + i);
+        if (i > 0) start.setHours(0, 0, 0, 0); // Start of the day for future days
+        
+        const end = new Date(start);
+        end.setHours(23, 59, 59, 999); // End of the day
 
         const count = await this.prisma.userVocabulary.count({
             where: {
                 user_id: userId,
-                next_review: { lte: date }
+                next_review: {
+                    gte: i === 0 ? new Date(0) : start, // Include overdue words only in Day 0
+                    lte: end
+                }
             }
         });
         forecast.push({
-            date: date.toISOString().split('T')[0],
+            date: end.toISOString().split('T')[0],
             count: count
         });
     }
