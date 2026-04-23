@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class FlashcardsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private usersService: UsersService
+  ) {}
 
   async getDueWords(userId: string) {
     return this.prisma.userVocabulary.findMany({
@@ -223,6 +227,9 @@ export class FlashcardsService {
         rating: rating,
       }
     });
+
+    // Update User XP & Streak (Reward 5 XP per word)
+    await this.usersService.addXp(word.user_id, 5);
 
     return this.prisma.userVocabulary.update({
       where: { id },

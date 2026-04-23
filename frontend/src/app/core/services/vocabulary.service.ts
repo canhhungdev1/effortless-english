@@ -60,7 +60,10 @@ export class VocabularyService {
       return this.http.post(`${this.apiUrl}/add`, word, {
         context: new HttpContext().set(SKIP_LOADING, true)
       }).pipe(
-        tap(() => this.refreshVocabulary(true))
+        tap(() => {
+          this.refreshVocabulary(true);
+          this.auth.refreshProfile().subscribe();
+        })
       );
     } else {
       const localData = this.getLocalVocab();
@@ -172,7 +175,10 @@ export class VocabularyService {
       return this.http.patch(`${this.apiUrl}/review/${id}`, { rating }, {
         context: new HttpContext().set(SKIP_LOADING, true)
       }).pipe(
-        tap(() => this.refreshVocabulary(true))
+        tap(() => {
+          this.refreshVocabulary(true);
+          this.auth.refreshProfile().subscribe();
+        })
       );
     } else {
       // Simple SM-2 implementation for LocalStorage

@@ -43,7 +43,7 @@ import { RouterLink } from '@angular/router';
           <div class="user-menu" (click)="toggleDropdown()">
             <div class="avatar">
               <div class="avatar-img">
-                <span class="avatar-initial">{{ user.name.charAt(0).toUpperCase() }}</span>
+                <span class="avatar-initial">{{ (user.name || user.email || 'U').charAt(0).toUpperCase() }}</span>
               </div>
             </div>
             <div class="dropdown-menu" *ngIf="showDropdown">

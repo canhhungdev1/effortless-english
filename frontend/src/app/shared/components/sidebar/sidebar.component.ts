@@ -66,7 +66,7 @@ import { AuthService } from '../../../core/auth/auth.service';
         <div class="auth-section" *ngIf="auth.currentUser$ | async as user; else loginTpl">
           <div class="user-info">
             <div class="user-avatar-initial">
-              {{ user.name.charAt(0).toUpperCase() }}
+              {{ (user.name || user.email || 'U').charAt(0).toUpperCase() }}
             </div>
             <div class="user-details">
               <span class="user-name">{{ user.name }}</span>

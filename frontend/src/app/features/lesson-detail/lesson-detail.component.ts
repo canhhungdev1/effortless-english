@@ -6,6 +6,7 @@ import { CourseService } from '../../core/services/course.service';
 import { Lesson, StoryLine, StoryContent } from '../../core/models/course.model';
 import { AudioPlayerComponent } from '../../shared/components/audio-player/audio-player.component';
 import { FlashcardSessionComponent } from '../../shared/components/flashcards/flashcard-session.component';
+import { QuickGameComponent } from '../../shared/components/quick-game/quick-game.component';
 import { VocabularyService } from '../../core/services/vocabulary.service';
 import { NotificationService } from '../../core/services/notification.service';
 
@@ -14,7 +15,7 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
 @Component({
   selector: 'app-lesson-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, AudioPlayerComponent, FlashcardSessionComponent],
+  imports: [CommonModule, RouterLink, AudioPlayerComponent, FlashcardSessionComponent, QuickGameComponent],
   template: `
     <div class="lesson-detail" *ngIf="lesson()">
       <!-- Lesson Header -->
@@ -67,13 +68,22 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
           <div class="content-card vocabulary-main">
             <div class="content-header">
               <app-audio-player #vocabPlayer title="Vocabulary" [subtitle]="lesson()?.title || ''" [audioUrl]="lesson()?.vocabulary?.audioUrl || ''" (timeUpdate)="onAudioTimeUpdate($event, 'vocabulary')" />
-              <button 
-                *ngIf="lesson()?.vocabulary?.keywords?.length"
-                class="study-btn" 
-                (click)="showFlashcards = true">
-                <span class="icon">🎴</span>
-                Study Flashcards
-              </button>
+              <div class="header-actions">
+                <button 
+                  *ngIf="lesson()?.vocabulary?.keywords?.length"
+                  class="study-btn game-btn" 
+                  (click)="showQuickGame = true">
+                  <span class="icon">🎮</span>
+                  Quick Game
+                </button>
+                <button 
+                  *ngIf="lesson()?.vocabulary?.keywords?.length"
+                  class="study-btn flash-btn" 
+                  (click)="showFlashcards = true">
+                  <span class="icon">🎴</span>
+                  Study Flashcards
+                </button>
+              </div>
             </div>
             <div class="vocab-paragraphs">
               <ng-container *ngIf="lesson()?.vocabulary?.lines?.length; else plainVocab">
@@ -157,6 +167,12 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
           *ngIf="showFlashcards && lesson()?.vocabulary?.keywords" 
           [words]="lesson()!.vocabulary!.keywords" 
           (close)="showFlashcards = false" />
+
+        <!-- Quick Game Overlay -->
+        <app-quick-game 
+          *ngIf="showQuickGame && lesson()?.vocabulary?.keywords" 
+          [words]="lesson()!.vocabulary!.keywords" 
+          (close)="showQuickGame = false" />
       </div>
     </div>
   `,
@@ -184,6 +200,12 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
       margin-bottom: 24px; 
       gap: 20px; 
     }
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .game-btn { background: var(--bg-gray); color: var(--text-primary); }
+    .flash-btn { background: var(--primary); color: white; border-color: var(--primary) !important; }
     .study-btn { 
       display: flex; 
       align-items: center; 
@@ -424,6 +446,7 @@ export class LessonDetailComponent implements OnInit {
   activeTab = 'mainArticle';
   availableTabs: { key: string; label: string }[] = [];
   showFlashcards = false;
+  showQuickGame = false;
 
   courseSlug = '';
   lessonSlug = '';

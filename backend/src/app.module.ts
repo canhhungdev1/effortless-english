@@ -13,6 +13,7 @@ import { FlashcardsModule } from './flashcards/flashcards.module';
 import { MediaModule } from './media/media.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { GamificationModule } from './gamification/gamification.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { AuthModule } from './auth/auth.module';
     MediaModule,
     UsersModule,
     AuthModule,
+    GamificationModule,
 
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', 'public'),

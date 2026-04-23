@@ -24,6 +24,13 @@ model User {
   name       String?
   avatar     String?
   role       Role     @default(USER)
+  
+  // Gamification
+  xp           Int      @default(0)
+  level        Int      @default(1)
+  streak       Int      @default(0)
+  last_study_date DateTime? @map("last_study_date")
+
   created_at DateTime @default(now()) @map("created_at")
   updated_at DateTime @updatedAt @map("updated_at")
 

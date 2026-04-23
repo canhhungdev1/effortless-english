@@ -1,10 +1,9 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { CourseService } from '../../core/services/course.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { Course } from '../../core/models/course.model';
-import { FlashcardSessionComponent } from '../../shared/components/flashcards/flashcard-session.component';
 import { VocabularyService } from '../../core/services/vocabulary.service';
 
 @Component({
@@ -25,6 +24,32 @@ import { VocabularyService } from '../../core/services/vocabulary.service';
             </div>
           </div>
           <button class="review-btn">Review Now</button>
+        </div>
+      </div>
+
+      <!-- User Stats Dashboard -->
+      <div class="stats-dashboard" *ngIf="userSignal()">
+        <div class="stat-card streak">
+          <div class="stat-header">
+            <span class="stat-icon">🔥</span>
+            <span class="stat-label">Daily Streak</span>
+          </div>
+          <div class="stat-value">{{ studyStats()?.streak || userSignal()?.streak || 0 }} Days</div>
+        </div>
+        
+        <div class="stat-card level">
+          <div class="stat-header">
+            <span class="stat-icon">⭐</span>
+            <span class="stat-label">Level {{ userSignal()?.level || 1 }}</span>
+          </div>
+          <div class="xp-container">
+            <div class="xp-bar-wrapper">
+              <div class="xp-bar" [style.width.%]="xpPercentage"></div>
+            </div>
+            <div class="xp-footer">
+               <span class="xp-text">{{ userSignal()?.xp || 0 }} / {{ (userSignal()?.level || 1) * 100 }} XP</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -68,6 +93,39 @@ import { VocabularyService } from '../../core/services/vocabulary.service';
       color: var(--primary);
       margin: 0;
     }
+
+    .stats-dashboard {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 20px;
+      margin-bottom: 32px;
+      animation: slideIn 0.4s ease;
+    }
+
+    .stat-card {
+      background: var(--bg-white);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      transition: var(--transition);
+      &:hover { border-color: var(--primary-light); transform: translateY(-2px); }
+    }
+
+    .stat-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .stat-icon { font-size: 20px; }
+    .stat-label { font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-value { font-size: 24px; font-weight: 800; color: var(--text-primary); }
+
+    .xp-container { display: flex; flex-direction: column; gap: 8px; }
+    .xp-bar-wrapper { height: 10px; background: var(--bg-gray); border-radius: 5px; overflow: hidden; }
+    .xp-bar { height: 100%; background: linear-gradient(90deg, var(--primary), #818cf8); border-radius: 5px; transition: width 0.6s ease; }
+    .xp-footer { display: flex; justify-content: flex-end; }
+    .xp-text { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+
+    @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
     .review-banner {
       background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
@@ -195,6 +253,7 @@ import { VocabularyService } from '../../core/services/vocabulary.service';
         grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
         gap: 20px;
       }
+      .stats-dashboard { grid-template-columns: 1fr 1fr; }
     }
 
     @media (max-width: 600px) {
@@ -232,6 +291,7 @@ import { VocabularyService } from '../../core/services/vocabulary.service';
         -webkit-box-orient: vertical;
         overflow: hidden;
       }
+      .stats-dashboard { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 380px) {
@@ -247,29 +307,44 @@ import { VocabularyService } from '../../core/services/vocabulary.service';
   `]
 })
 export class HomeComponent implements OnInit {
+  private courseService = inject(CourseService);
+  private authService = inject(AuthService);
+  private vocabService = inject(VocabularyService);
+
   courses = signal<Course[]>([]);
   dueCount = signal(0);
+  userSignal = this.authService.userSignal;
+  studyStats = signal<any>(null);
 
-  constructor(
-    private courseService: CourseService,
-    private authService: AuthService,
-    private vocabService: VocabularyService
-  ) {}
+  constructor() {}
+
+  get xpPercentage(): number {
+    const user = this.userSignal();
+    if (!user) return 0;
+    const currentXp = user.xp || 0;
+    const level = user.level || 1;
+    const xpNeeded = level * 100;
+    return Math.min(Math.round((currentXp / xpNeeded) * 100), 100);
+  }
 
   ngOnInit() {
     this.courseService.getCourses().subscribe(courses => {
       this.courses.set(courses);
     });
 
+    // Only sync vocabulary and profile once on init or when user state actually changes
     this.authService.currentUser$.subscribe((user: any) => {
-      this.refreshStats();
+      if (user) {
+        this.vocabService.refreshVocabulary(true).subscribe();
+        this.vocabService.getStudyStats(true).subscribe(res => this.studyStats.set(res));
+      } else {
+        this.vocabService.refreshVocabulary(true).subscribe();
+      }
     });
 
-    // Listen to reactive stats stream for automatic updates
+    // Listen to reactive stats stream for UI updates
     this.vocabService.stats$.subscribe(stats => {
-      if (stats) {
-        this.dueCount.set(stats.dueCount);
-      }
+      if (stats) this.dueCount.set(stats.dueCount);
     });
   }
 

@@ -111,7 +111,7 @@ import confetti from 'canvas-confetti';
   styles: [`
     .flashcard-overlay {
       position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9);
-      backdrop-filter: blur(12px); z-index: 1000; display: flex;
+      backdrop-filter: blur(12px); z-index: 9999; display: flex;
       align-items: center; justify-content: center; padding: 20px; animation: fadeIn 0.4s ease;
     }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

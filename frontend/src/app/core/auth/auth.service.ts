@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
+import { SKIP_LOADING } from '../interceptors/loading.interceptor';
 import { tap, catchError } from 'rxjs/operators';
 import { of, BehaviorSubject, Observable } from 'rxjs';
 import { Router } from '@angular/router';
@@ -11,6 +12,10 @@ export interface User {
   name: string;
   role: 'USER' | 'ADMIN';
   avatar?: string;
+  xp?: number;
+  level?: number;
+  streak?: number;
+  last_study_date?: string;
 }
 
 export interface AuthResponse {
@@ -63,6 +68,17 @@ export class AuthService {
     this.currentUserSubject.next(null);
     this.userSignal.set(null);
     this.router.navigate(['/']);
+  }
+
+  refreshProfile(): Observable<User> {
+    const context = new HttpContext().set(SKIP_LOADING, true);
+    return this.http.get<User>(`${this.apiUrl}/profile`, { context }).pipe(
+      tap(user => {
+        localStorage.setItem('user_data', JSON.stringify(user));
+        this.currentUserSubject.next(user);
+        this.userSignal.set(user);
+      })
+    );
   }
 
   private handleAuthSuccess(response: AuthResponse) {
