@@ -34,6 +34,9 @@ import { AuthService } from '../../../core/auth/auth.service';
         <div class="nav-section">
           <span class="nav-label">CATEGORY</span>
           <ul class="nav-list">
+            <li class="nav-item" routerLinkActive="active">
+              <a routerLink="/dashboard" class="nav-link" (click)="closeSidebar.emit()">Dashboard</a>
+            </li>
             <li class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
               <a routerLink="/" class="nav-link" (click)="closeSidebar.emit()">Library</a>
             </li>
@@ -42,6 +45,9 @@ import { AuthService } from '../../../core/auth/auth.service';
             </li>
             <li class="nav-item" routerLinkActive="active">
               <a routerLink="/review" class="nav-link" (click)="closeSidebar.emit()">Smart Review</a>
+            </li>
+            <li class="nav-item" routerLinkActive="active">
+              <a routerLink="/achievements" class="nav-link" (click)="closeSidebar.emit()">Achievements</a>
             </li>
             <li class="nav-item">
               <a class="nav-link">Guide</a>

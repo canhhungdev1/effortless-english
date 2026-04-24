@@ -23,6 +23,16 @@ export const routes: Routes = [
           import('./features/home/home.component').then(m => m.HomeComponent)
       },
       {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent)
+      },
+      {
+        path: 'achievements',
+        loadComponent: () =>
+          import('./features/achievements/achievements.component').then(m => m.AchievementsComponent)
+      },
+      {
         path: 'courses/:courseSlug',
         loadComponent: () =>
           import('./features/course-detail/course-detail.component').then(m => m.CourseDetailComponent)

@@ -36,8 +36,49 @@ model User {
 
   vocabularies UserVocabulary[]
   review_history ReviewHistory[]
+  daily_stats    UserDailyStat[]
+  badges         UserBadge[]
 
   @@map("users")
+}
+
+model UserDailyStat {
+  id              String   @id @default(uuid())
+  user_id         String   @map("user_id")
+  date            DateTime @default(now()) @map("date")
+  listening_time  Int      @default(0)    @map("listening_time") // seconds
+  words_learned   Int      @default(0)    @map("words_learned")
+  xp_earned       Int      @default(0)    @map("xp_earned")
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  @@unique([user_id, date])
+  @@map("user_daily_stats")
+}
+
+model Badge {
+  id                String   @id @default(uuid())
+  code              String   @unique
+  name              String
+  description       String
+  icon_url          String   @map("icon_url")
+  requirement_type  String   @map("requirement_type") // STREAK, TIME, VOCAB
+  requirement_value Int      @map("requirement_value")
+  
+  users             UserBadge[]
+  @@map("badges")
+}
+
+model UserBadge {
+  id         String   @id @default(uuid())
+  user_id    String   @map("user_id")
+  badge_id   String   @map("badge_id")
+  earned_at  DateTime @default(now()) @map("earned_at")
+
+  user  User  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badge_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, badge_id])
+  @@map("user_badges")
 }
 
 model Course {

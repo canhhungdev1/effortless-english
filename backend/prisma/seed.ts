@@ -3,150 +3,84 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
-
 async function main() {
-  console.log('Seeding data with slugs and organized media structure...');
+  let connectionString = process.env.DATABASE_URL;
+    
+  // Auto-escape '@' in password if present
+  if (connectionString && connectionString.split('@').length > 2) {
+    const lastAtIndex = connectionString.lastIndexOf('@');
+    const credentials = connectionString.substring(0, lastAtIndex);
+    const hostPart = connectionString.substring(lastAtIndex + 1);
+    
+    const firstColonIndex = credentials.indexOf(':', 11);
+    if (firstColonIndex !== -1) {
+      const prefix = credentials.substring(0, firstColonIndex);
+      const password = credentials.substring(firstColonIndex + 1);
+      connectionString = `${prefix}:${password.replace(/@/g, '%40')}@${hostPart}`;
+    }
+  }
 
-  // 1. Create Course: Effortless English
-  const effortlessSlug = 'effortless-english';
-  const effortless = await prisma.course.upsert({
-    where: { slug: effortlessSlug },
-    update: {},
-    create: {
-      slug: effortlessSlug,
-      title: 'Effortless English Original Course',
-      description: 'Khóa học phản xạ tiếng Anh tự động của AJ Hoge.',
-      level: 'Pre-Intermediate',
-      cover_image: 'assets/images/course-effortless.webp',
-      is_vip: true,
-      stage: 1,
+  const pool = new Pool({ 
+    connectionString,
+    ssl: { rejectUnauthorized: false },
+  });
+  const adapter = new PrismaPg(pool);
+  const prisma = new PrismaClient({ adapter });
+
+  console.log('Seeding badges...');
+
+  const badges = [
+    {
+      code: 'STREAK_7',
+      name: '7-Day Warrior',
+      description: 'Maintain a learning streak for 7 consecutive days',
+      requirement_type: 'STREAK',
+      requirement_value: 7,
+      icon_url: 'assets/badges/streak-7.svg'
     },
-  });
-
-  // --- LESSON 1: Day Of The Dead ---
-  const dotdSlug = 'day-of-the-dead';
-  const dotdMediaBase = `/media/${effortlessSlug}/${dotdSlug}`;
-
-  // Clean up existing lesson to avoid conflict or duplicate content
-  await prisma.lesson.deleteMany({ where: { slug: dotdSlug, course_id: effortless.id } });
-
-  const dotd = await prisma.lesson.create({
-    data: {
-      course_id: effortless.id,
-      slug: dotdSlug,
-      order: 1,
-      title: 'Day Of The Dead',
-      progress: 0,
+    {
+      code: 'STREAK_30',
+      name: '30-Day Legend',
+      description: 'Maintain a learning streak for 30 consecutive days',
+      requirement_type: 'STREAK',
+      requirement_value: 30,
+      icon_url: 'assets/badges/streak-30.svg'
     },
-  });
-
-  await prisma.lessonContent.createMany({
-    data: [
-      {
-        lesson_id: dotd.id,
-        type: 'ARTICLE',
-        content_en: `I arrive in Guatemala on <strong>The Day of the Dead</strong>, November 1st. I'm <strong>curious</strong> about this holiday, so I go to the <strong>cemetery</strong> to see what's happening. What I find is quite interesting.
-<br><br>
-The <strong>atmosphere</strong> is like a party. There are people everywhere. Families are sitting around the <strong>graves</strong> of their dead <strong>ancestors</strong>. They clean the graves and add <strong>fresh flowers</strong>.`,
-        content_vi: `Tôi đến Guatemala vào <strong>Ngày của mạc giới</strong>, mùng 1 tháng 11. Tôi <strong>tò mò</strong> về ngày lễ này, vì vậy tôi đến <strong>nghĩa trang</strong> để xem điều gì đang diễn ra.`,
-      },
-      {
-        lesson_id: dotd.id,
-        type: 'VOCABULARY',
-        audio_url: `${dotdMediaBase}/vocabulary.mp3`,
-        vtt_url: `${dotdMediaBase}/vocabulary.vtt`,
-        data: {
-          paragraphs: [
-            'In this part, we talk about "Somber". Somber means serious or sad.',
-            'Next is "Cemetery". A cemetery is a place where dead people are buried.'
-          ],
-          keywords: [
-            { word: 'Somber', phonetic: '/ sɑm.bɚ/', translation: 'U ám, buồn rầu', example: 'The atmosphere was somber and serious.' },
-            { word: 'Cemetery', phonetic: '/ sem.ə.tri/', translation: 'Nghĩa trang', example: 'They go to the cemetery to visit the graves of their ancestors.' }
-          ]
-        }
-      },
-      {
-        lesson_id: dotd.id,
-        type: 'MINI_STORY',
-        title: 'Mini-Story A',
-        audio_url: `${dotdMediaBase}/mini-story-a.mp3`,
-        vtt_url: `${dotdMediaBase}/mini-story-a.vtt`,
-        data: { lines: [] }
-      }
-    ]
-  });
-  
-  // --- LESSON 2: A Kiss ---
-  const aKissSlug = 'a-kiss';
-  const aKissMediaBase = `/media/${effortlessSlug}/${aKissSlug}`;
-
-  await prisma.lesson.deleteMany({ where: { slug: aKissSlug, course_id: effortless.id } });
-  
-  const aKiss = await prisma.lesson.create({
-    data: {
-      course_id: effortless.id,
-      slug: aKissSlug,
-      order: 2,
-      title: 'A Kiss',
-      progress: 0,
+    {
+      code: 'TIME_10_H',
+      name: 'Listening Enthusiast',
+      description: 'Listen to 10 hours of English content',
+      requirement_type: 'TIME',
+      requirement_value: 10 * 3600,
+      icon_url: 'assets/badges/time-10h.svg'
     },
-  });
+    {
+      code: 'VOCAB_100',
+      name: 'Word Collector',
+      description: 'Master 100 vocabulary words',
+      requirement_type: 'VOCAB',
+      requirement_value: 100,
+      icon_url: 'assets/badges/vocab-100.svg'
+    }
+  ];
 
-  await prisma.lessonContent.createMany({
-    data: [
-      {
-        lesson_id: aKiss.id,
-        type: 'ARTICLE',
-        title: 'Main Story',
-        audio_url: `${aKissMediaBase}/article.mp3`,
-        vtt_url: `${aKissMediaBase}/article.vtt`,
-        content_en: 'Carlos buys a new car. It is a very expensive car...',
-        content_vi: 'Carlos mua một chiếc xe hơi mới. Đó là một chiếc xe rất đắt tiền...',
-      },
-      {
-        lesson_id: aKiss.id,
-        type: 'VOCABULARY',
-        title: 'Vocabulary Explanation',
-        audio_url: `${aKissMediaBase}/vocabulary.mp3`,
-        vtt_url: `${aKissMediaBase}/vocabulary.vtt`,
-        data: {
-          paragraphs: ['In this lesson we are going to learn about "Huge". Huge means very very big.'],
-          keywords: [
-            { word: 'Huge', phonetic: '/hjuːdʒ/', translation: 'Khổng lồ', example: 'It was a huge, blue, fast car.' }
-          ]
-        }
-      },
-      {
-        lesson_id: aKiss.id,
-        type: 'MINI_STORY',
-        title: 'Mini-Story A',
-        audio_url: `${aKissMediaBase}/mini-story-a.mp3`,
-        vtt_url: `${aKissMediaBase}/mini-story-a.vtt`,
-        data: { lines: [] }
-      },
-      {
-        lesson_id: aKiss.id,
-        type: 'MINI_STORY',
-        title: 'Mini-Story B',
-        audio_url: `${aKissMediaBase}/mini-story-b.mp3`,
-        vtt_url: `${aKissMediaBase}/mini-story-b.vtt`,
-        data: { lines: [] }
-      }
-    ]
-  });
-
-  console.log('Seeding complete with slug-based media structure.');
+  try {
+    for (const badge of badges) {
+      await prisma.badge.upsert({
+        where: { code: badge.code },
+        update: badge,
+        create: badge,
+      });
+      console.log(`- Upserted badge: ${badge.name}`);
+    }
+    console.log('Seeding complete.');
+  } finally {
+    await prisma.$disconnect();
+    await pool.end();
+  }
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

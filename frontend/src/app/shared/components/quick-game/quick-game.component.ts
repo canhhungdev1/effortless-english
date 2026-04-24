@@ -407,12 +407,12 @@ export class QuickGameComponent implements OnInit {
     // Reward XP based on score
     if (this.score > 0) {
       const xpToGain = this.score * 10; // 10 XP per correct answer
-      this.gamificationService.addXp(xpToGain).subscribe({
-        next: (res) => {
+      this.gamificationService.trackActivity({ xp: xpToGain }).subscribe({
+        next: () => {
           this.notification.show(`Awesome! You earned ${xpToGain} XP!`, 'success');
           this.authService.refreshProfile().subscribe();
         },
-        error: (err) => console.error('Failed to update XP', err)
+        error: (err: any) => console.error('Failed to update XP', err)
       });
     }
 

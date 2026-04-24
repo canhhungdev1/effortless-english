@@ -1,5 +1,6 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient, HttpContext } from '@angular/common/http';
+import { GamificationService } from '../services/gamification.service';
 import { SKIP_LOADING } from '../interceptors/loading.interceptor';
 import { tap, catchError } from 'rxjs/operators';
 import { of, BehaviorSubject, Observable } from 'rxjs';
@@ -35,6 +36,8 @@ export class AuthService {
   
   // Using Signals for modern Angular UI binding
   public userSignal = signal<User | null>(null);
+
+  private gamificationService = inject(GamificationService);
 
   constructor(private http: HttpClient, private router: Router) {
     this.checkInitialToken();
@@ -86,6 +89,12 @@ export class AuthService {
     localStorage.setItem('user_data', JSON.stringify(response.user));
     this.currentUserSubject.next(response.user);
     this.userSignal.set(response.user);
+    
+    // Sync guest data if any
+    this.gamificationService.syncGuestData().subscribe({
+      next: () => console.log('Guest data synced successfully'),
+      error: (err) => console.error('Failed to sync guest data', err)
+    });
   }
 
   isLoggedIn(): boolean {

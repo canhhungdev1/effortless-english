@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { SidebarComponent } from '../../components/sidebar/sidebar.component';
 import { HeaderComponent } from '../../components/header/header.component';
@@ -6,6 +6,10 @@ import { ToastComponent } from '../../components/toast/toast.component';
 import { CommonModule } from '@angular/common';
 import { LoadingComponent } from '../../components/loading/loading.component';
 import { ConfirmModalComponent } from '../../components/confirm-modal/confirm-modal.component';
+import { GamificationService } from '../../../core/services/gamification.service';
+import { NotificationService } from '../../../core/services/notification.service';
+import { Subscription } from 'rxjs';
+import confetti from 'canvas-confetti';
 
 @Component({
   selector: 'app-main-layout',
@@ -97,9 +101,59 @@ import { ConfirmModalComponent } from '../../components/confirm-modal/confirm-mo
     }
   `]
 })
-export class MainLayoutComponent {
+export class MainLayoutComponent implements OnInit, OnDestroy {
   isMobileOpen = false;
   isDesktopCollapsed = false;
+
+  private gamification = inject(GamificationService);
+  private notification = inject(NotificationService);
+  private badgeSub?: Subscription;
+
+  ngOnInit() {
+    this.badgeSub = this.gamification.newBadge$.subscribe((badge) => {
+      this.celebrateEarnedBadge(badge);
+    });
+  }
+
+  ngOnDestroy() {
+    this.badgeSub?.unsubscribe();
+  }
+
+  private celebrateEarnedBadge(badge: any) {
+    if (typeof window === 'undefined') return;
+
+    // Show Notification
+    this.notification.show(
+      `🏆 NEW ACHIEVEMENT: ${badge.name}! Check your profile.`,
+      'success'
+    );
+
+    // Fire Confetti!
+    const duration = 3 * 1000;
+    const end = Date.now() + duration;
+
+    const frame = () => {
+      confetti({
+        particleCount: 3,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0 },
+        colors: ['#4f46e5', '#818cf8', '#22c55e']
+      });
+      confetti({
+        particleCount: 3,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1 },
+        colors: ['#4f46e5', '#818cf8', '#22c55e']
+      });
+
+      if (Date.now() < end) {
+        requestAnimationFrame(frame);
+      }
+    };
+    frame();
+  }
 
   toggleSidebar() {
     if (typeof window !== 'undefined' && window.innerWidth <= 1024) {

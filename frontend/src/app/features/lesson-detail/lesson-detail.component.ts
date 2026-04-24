@@ -9,6 +9,8 @@ import { FlashcardSessionComponent } from '../../shared/components/flashcards/fl
 import { QuickGameComponent } from '../../shared/components/quick-game/quick-game.component';
 import { VocabularyService } from '../../core/services/vocabulary.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { GamificationService } from '../../core/services/gamification.service';
+import { OnDestroy } from '@angular/core';
 
 type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
 
@@ -51,7 +53,7 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
         <!-- Main Article -->
         <div *ngIf="activeTab === 'mainArticle'" class="content-card">
           <div class="content-header">
-            <app-audio-player title="Main Article" [subtitle]="lesson()?.title || ''" [audioUrl]="lesson()?.mainArticle?.audioUrl || ''" />
+            <app-audio-player title="Main Article" [subtitle]="lesson()?.title || ''" [audioUrl]="lesson()?.mainArticle?.audioUrl || ''" (onPlay)="startTracking()" (onPause)="stopTracking()" />
           </div>
           <div class="article-body">
             <div class="article-english">
@@ -67,7 +69,7 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
         <div *ngIf="activeTab === 'vocabulary'" class="vocabulary-layout">
           <div class="content-card vocabulary-main">
             <div class="content-header">
-              <app-audio-player #vocabPlayer title="Vocabulary" [subtitle]="lesson()?.title || ''" [audioUrl]="lesson()?.vocabulary?.audioUrl || ''" (timeUpdate)="onAudioTimeUpdate($event, 'vocabulary')" />
+              <app-audio-player #vocabPlayer title="Vocabulary" [subtitle]="lesson()?.title || ''" [audioUrl]="lesson()?.vocabulary?.audioUrl || ''" (timeUpdate)="onAudioTimeUpdate($event, 'vocabulary')" (onPlay)="startTracking()" (onPause)="stopTracking()" />
               <div class="header-actions">
                 <button 
                   *ngIf="lesson()?.vocabulary?.keywords?.length"
@@ -142,7 +144,9 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
               [title]="getTabLabel(activeTab)" 
               [subtitle]="getActiveStory(activeTab)?.title || lesson()?.title || ''" 
               [audioUrl]="getActiveStory(activeTab)?.audioUrl || ''" 
-              (timeUpdate)="onStoryTimeUpdate($event, activeTab)" />
+              (timeUpdate)="onStoryTimeUpdate($event, activeTab)"
+              (onPlay)="startTracking()"
+              (onPause)="stopTracking()" />
           </div>
 
           <div class="story-body">
@@ -439,7 +443,7 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
     }
   `]
 })
-export class LessonDetailComponent implements OnInit {
+export class LessonDetailComponent implements OnInit, OnDestroy {
   @ViewChild('vocabPlayer') vocabPlayer?: AudioPlayerComponent;
   @ViewChild('storyPlayer') storyPlayer?: AudioPlayerComponent;
 
@@ -463,6 +467,7 @@ export class LessonDetailComponent implements OnInit {
     private courseService: CourseService,
     public vocabService: VocabularyService,
     private notification: NotificationService,
+    private gamification: GamificationService,
     private http: HttpClient
   ) { }
 
@@ -526,6 +531,43 @@ export class LessonDetailComponent implements OnInit {
         this.vocabPlayer.play();
       }
     });
+  }
+
+  // Analytics Tracking
+  private trackingInterval: any;
+  private secondsListened = 0;
+
+  startTracking() {
+    if (this.trackingInterval) return;
+    this.trackingInterval = setInterval(() => {
+      this.secondsListened += 1;
+      // Sync to server every 30 seconds of listening
+      if (this.secondsListened >= 30) {
+        this.syncTime();
+      }
+    }, 1000);
+  }
+
+  stopTracking() {
+    if (this.trackingInterval) {
+      clearInterval(this.trackingInterval);
+      this.trackingInterval = null;
+    }
+    // Sync final remaining time
+    if (this.secondsListened > 0) {
+      this.syncTime();
+    }
+  }
+
+  syncTime() {
+    if (this.secondsListened === 0) return;
+    const timeToSync = this.secondsListened;
+    this.secondsListened = 0;
+    this.gamification.trackActivity({ seconds: timeToSync }).subscribe();
+  }
+
+  ngOnDestroy() {
+    this.stopTracking();
   }
 
   private buildTabs(lesson: Lesson) {

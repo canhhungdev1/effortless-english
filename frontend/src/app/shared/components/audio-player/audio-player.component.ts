@@ -385,6 +385,8 @@ export class AudioPlayerComponent implements OnChanges, OnDestroy {
   @Input() title: string = 'Effortless Audio';
   @Input() subtitle: string = 'Unknown Track';
   @Output() timeUpdate = new EventEmitter<number>();
+  @Output() onPlay = new EventEmitter<void>();
+  @Output() onPause = new EventEmitter<void>();
   @ViewChild('audioElement') audioRef!: ElementRef<HTMLAudioElement>;
 
   isPlaying = false;
@@ -460,9 +462,11 @@ export class AudioPlayerComponent implements OnChanges, OnDestroy {
     if (audio.paused) {
       audio.play().catch(e => console.error('Audio play failed', e));
       this.isPlaying = true;
+      this.onPlay.emit();
     } else {
       audio.pause();
       this.isPlaying = false;
+      this.onPause.emit();
     }
   }
 
@@ -525,6 +529,7 @@ export class AudioPlayerComponent implements OnChanges, OnDestroy {
     if (!this.isLooping) {
       this.isPlaying = false;
       this.progress = 0;
+      this.onPause.emit();
       if (this.audioRef?.nativeElement) {
         this.audioRef.nativeElement.currentTime = 0;
       }
