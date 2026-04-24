@@ -55,6 +55,11 @@ export class FlashcardsController {
     return this.flashcardsService.updateWord(id, data);
   }
 
+  @Post('quiz-results')
+  recordQuizResults(@CurrentUser() user: any, @Body() results: any[]) {
+    return this.flashcardsService.recordQuizResults(user.id, results);
+  }
+
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.flashcardsService.deleteWord(id);

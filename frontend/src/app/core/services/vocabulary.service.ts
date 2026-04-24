@@ -213,6 +213,22 @@ export class VocabularyService {
     );
   }
 
+  recordQuizResults(results: { vocabularyId: string, isCorrect: boolean }[]): Observable<any> {
+    if (this.auth.isLoggedIn()) {
+      return this.http.post(`${this.apiUrl}/quiz-results`, results, {
+        context: new HttpContext().set(SKIP_LOADING, true)
+      }).pipe(
+        tap(() => {
+          this.refreshVocabulary(true);
+          this.auth.refreshProfile().subscribe();
+        })
+      );
+    } else {
+      const obs = results.map(res => this.reviewWord(res.vocabularyId, res.isCorrect ? 2 : 0));
+      return forkJoin(obs);
+    }
+  }
+
   private defaultStats = { dueCount: 0, totalCount: 0, masteredCount: 0, forecast: [] };
 
   getReviewStats(skipLoading: boolean = false): Observable<any> {
@@ -236,6 +252,7 @@ export class VocabularyService {
         dueCount,
         totalCount: localData.length,
         masteredCount: 0, 
+        accuracy: 0,
         forecast: []
       };
       this.statsSubject.next(stats);

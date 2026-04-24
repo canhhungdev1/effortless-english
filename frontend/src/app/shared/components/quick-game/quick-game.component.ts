@@ -246,9 +246,11 @@ interface QuizOption {
 })
 export class QuickGameComponent implements OnInit {
   @Input() words: any[] = [];
+  @Output() results = new EventEmitter<{ vocabularyId: string, isCorrect: boolean }[]>();
   @Output() close = new EventEmitter<void>();
 
   quizDeck: any[] = [];
+  gameResults: { vocabularyId: string, isCorrect: boolean }[] = [];
   currentIndex = 0;
   score = 0;
   options: QuizOption[] = [];
@@ -310,6 +312,7 @@ export class QuickGameComponent implements OnInit {
     
     this.currentIndex = 0;
     this.score = 0;
+    this.gameResults = [];
     this.isFinished = false;
     this.nextQuestion();
   }
@@ -354,6 +357,11 @@ export class QuickGameComponent implements OnInit {
       this.isWrong = true;
       this.playSound(this.wrongSound);
     }
+    
+    // Track detailed result
+    if (this.currentQuestion.id) {
+      this.gameResults.push({ vocabularyId: this.currentQuestion.id, isCorrect });
+    }
 
     this.cdr.detectChanges();
 
@@ -386,6 +394,12 @@ export class QuickGameComponent implements OnInit {
     if (this.accuracy >= 70) {
       this.triggerConfetti();
     }
+    
+    // Emit results for parent components (SRS integration)
+    if (this.gameResults.length > 0) {
+      this.results.emit(this.gameResults);
+    }
+    
     this.cdr.detectChanges();
   }
 

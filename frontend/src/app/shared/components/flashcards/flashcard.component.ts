@@ -40,6 +40,7 @@ import { VocabularyWord } from '../../../core/models/course.model';
               </button>
             </div>
             <h3 class="translation">{{ data.translation }}</h3>
+            <p class="phonetic back-phonetic" *ngIf="data.phonetic && data.phonetic !== 'Phrase'">{{ data.phonetic }}</p>
             <div class="example-box" *ngIf="data.example">
               <span class="example-label">Example:</span>
               <p class="example-text">{{ data.example }}</p>
@@ -165,6 +166,7 @@ import { VocabularyWord } from '../../../core/models/course.model';
       color: var(--text-muted);
       font-family: 'Inter', sans-serif;
       margin-top: 8px;
+      &.back-phonetic { font-size: 16px; margin-top: 4px; color: var(--primary); }
     }
 
     .translation {

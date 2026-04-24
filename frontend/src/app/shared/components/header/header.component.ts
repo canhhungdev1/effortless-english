@@ -40,6 +40,18 @@ import { RouterLink } from '@angular/router';
         </button>
 
         <ng-container *ngIf="authService.userSignal() as user; else loginBtn">
+          <!-- Compact Stats for Header -->
+          <div class="header-stats">
+            <div class="header-stat-item" title="Current Level">
+              <span class="stat-icon">⭐</span>
+              <span class="stat-value">{{ user.level || 1 }}</span>
+            </div>
+            <div class="header-stat-item" title="XP Progress">
+              <span class="stat-icon">📈</span>
+              <span class="stat-value">{{ user.xp || 0 }} XP</span>
+            </div>
+          </div>
+
           <div class="user-menu" (click)="toggleDropdown()">
             <div class="avatar">
               <div class="avatar-img">
@@ -167,10 +179,30 @@ import { RouterLink } from '@angular/router';
       font-size: 20px;
       padding: 4px;
       transition: transform 0.2s;
-
+      margin-right: 8px;
+ 
       &:hover {
         transform: scale(1.1);
       }
+    }
+
+    .header-stats {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 4px 12px;
+      background: var(--bg-gray);
+      border-radius: var(--radius-xl);
+      margin-right: 8px;
+    }
+
+    .header-stat-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      
+      .stat-icon { font-size: 14px; }
+      .stat-value { font-size: 13px; font-weight: 700; color: var(--text-primary); }
     }
 
     .avatar {

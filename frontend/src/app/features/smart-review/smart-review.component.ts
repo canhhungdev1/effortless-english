@@ -5,13 +5,14 @@ import { VocabularyService } from '../../core/services/vocabulary.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { FlashcardSessionComponent } from '../../shared/components/flashcards/flashcard-session.component';
+import { QuickGameComponent } from '../../shared/components/quick-game/quick-game.component';
 import { HeatmapComponent } from '../../shared/components/heatmap/heatmap.component';
-import { map, distinctUntilChanged, take } from 'rxjs';
+import { map, distinctUntilChanged, take, BehaviorSubject } from 'rxjs';
 
 @Component({
   selector: 'app-smart-review',
   standalone: true,
-  imports: [CommonModule, FlashcardSessionComponent, HeatmapComponent],
+  imports: [CommonModule, FlashcardSessionComponent, QuickGameComponent, HeatmapComponent],
   template: `
     <div class="review-container fade-in">
       <div class="header-section">
@@ -19,15 +20,32 @@ import { map, distinctUntilChanged, take } from 'rxjs';
           <h1 class="title">Smart Review Vocabulary</h1>
           <p class="subtitle">Optimize your memory using Spaced Repetition (SRS).</p>
         </div>
-          <div class="header-actions">
-            <!-- Streak Badge -->
-            <div class="streak-badge" *ngIf="studyStats?.streak > 0" title="Daily Streak">
-               <span class="streak-icon">🔥</span>
-               <span class="streak-count">{{ studyStats.streak }}</span>
-               <span class="streak-label">Days</span>
-             </div>
+        <div class="header-actions">
+          <!-- Level Badge -->
+          <div class="level-badge" (click)="syncData()" title="Your Current Level">
+             <span class="level-icon">⭐</span>
+             <span class="level-val">Level {{ auth.userSignal()?.level || 1 }}</span>
           </div>
+
+          <!-- Streak Badge -->
+          <div class="streak-badge" *ngIf="studyStats?.streak > 0" title="Daily Streak">
+             <span class="streak-icon">🔥</span>
+             <span class="streak-count">{{ studyStats.streak }}</span>
+             <span class="streak-label">Days</span>
+           </div>
         </div>
+      </div>
+
+      <!-- XP Mini Bar -->
+      <div class="xp-mini-card" *ngIf="auth.userSignal() as user">
+        <div class="xp-info">
+          <span class="xp-label">XP Progress</span>
+          <span class="xp-value">{{ user.xp || 0 }} / {{ (user.level || 1) * 100 }} XP</span>
+        </div>
+        <div class="xp-progress-bg">
+          <div class="xp-progress-fill" [style.width.%]="xpPercentage"></div>
+        </div>
+      </div>
 
       <!-- Stats Dashboard -->
       <div class="stats-bar" *ngIf="stats">
@@ -91,7 +109,27 @@ import { map, distinctUntilChanged, take } from 'rxjs';
              <h4>Knowledge Shield</h4>
              <p>Words with high ease factor and long intervals, considered learned for now.</p>
           </div>
+          <div class="stat-divider"></div>
+        
+        <div class="stat-item accuracy" title="Overall memory accuracy">
+          <div class="stat-top">
+            <div class="stat-icon-sm">🎯</div>
+            <div class="stat-info">
+              <span class="stat-num">{{ studyStats?.accuracy || 0 }}%</span>
+              <span class="stat-label">Accuracy</span>
+            </div>
+          </div>
+          <div class="stat-progress">
+            <div class="stat-progress-fill accuracy-fill" [style.width.%]="studyStats?.accuracy || 0"></div>
+          </div>
+          <div class="stat-meta">Based on all review sessions</div>
+          
+          <div class="premium-tooltip">
+             <h4>Precision Score</h4>
+             <p>Your objective accuracy across all flashcards and quizzes.</p>
+          </div>
         </div>
+      </div>
       </div>
 
       <div class="main-layout">
@@ -119,6 +157,28 @@ import { map, distinctUntilChanged, take } from 'rxjs';
                   </button>
                 </div>
              </ng-template>
+          </div>
+
+          <!-- New Words Quiz Section (Always Visible for stability) -->
+          <div class="quiz-promo" [class.empty]="newWordsCount === 0">
+             <div class="promo-content">
+                <div class="promo-icon">{{ newWordsCount > 0 ? '🎯' : '✅' }}</div>
+                <div class="promo-info">
+                   <h3>{{ newWordsCount > 0 ? 'Knowledge Checkout' : 'All Caught Up!' }}</h3>
+                   <p *ngIf="newWordsCount > 0">
+                     You have <strong>{{ newWordsCount }}</strong> new words to activate. Try a quiz to start their review cycle!
+                   </p>
+                   <p *ngIf="newWordsCount === 0">
+                     All your words are active. Add more words from lessons to start new quizzes.
+                   </p>
+                </div>
+             </div>
+             <button *ngIf="newWordsCount > 0" class="quiz-btn" (click)="startQuiz()">
+               Launch Quiz
+             </button>
+             <button *ngIf="newWordsCount === 0" class="quiz-btn practice" (click)="startPracticeQuiz()">
+               Practice Quiz
+             </button>
           </div>
         </div>
 
@@ -150,12 +210,26 @@ import { map, distinctUntilChanged, take } from 'rxjs';
       [words]="studySessionWords" 
       (close)="onSessionClose()">
     </app-flashcard-session>
+
+    <app-quick-game
+      *ngIf="showQuizModal"
+      [words]="quizWords"
+      (results)="onQuizResults($event)"
+      (close)="showQuizModal = false">
+    </app-quick-game>
   `,
   styles: [`
     .review-container { max-width: 1100px; margin: 0 auto; padding: 40px 20px; will-change: opacity; }
     .header-section { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
     .header-actions { display: flex; align-items: center; gap: 12px; }
     
+    .level-badge {
+      display: flex; align-items: center; gap: 8px; background: #eff6ff;
+      padding: 8px 16px; border-radius: 100px; border: 1px solid #dbeafe;
+      .level-icon { font-size: 18px; }
+      .level-val { font-size: 14px; font-weight: 800; color: #1e40af; }
+    }
+
     .streak-badge {
       display: flex; align-items: center; gap: 8px; background: #fff7ed;
       padding: 8px 16px; border-radius: 100px; border: 1px solid #ffedd5;
@@ -164,6 +238,18 @@ import { map, distinctUntilChanged, take } from 'rxjs';
       .streak-count { font-size: 18px; font-weight: 800; color: #9a3412; }
       .streak-label { font-size: 11px; font-weight: 700; color: #9a3412; text-transform: uppercase; margin-top: 2px; }
     }
+
+    .xp-mini-card {
+      background: white; border: 1px solid var(--border-color);
+      border-radius: 16px; padding: 12px 20px; margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+    .xp-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .xp-label { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+    .xp-value { font-size: 13px; font-weight: 800; color: var(--primary); }
+    .xp-progress-bg { height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden; }
+    .xp-progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), #818cf8); border-radius: 4px; transition: width 0.8s cubic-bezier(0.23, 1, 0.32, 1); }
+
     @keyframes streakPop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
     @keyframes streakPop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -189,6 +275,7 @@ import { map, distinctUntilChanged, take } from 'rxjs';
     .due-fill { background: linear-gradient(90deg, #ef4444, #f97316); }
     .learning-fill { background: linear-gradient(90deg, #3b82f6, #6366f1); }
     .mastered-fill { background: linear-gradient(90deg, #10b981, #34d399); }
+    .accuracy-fill { background: linear-gradient(90deg, #8b5cf6, #d946ef); }
     .stat-meta { font-size: 12px; color: #94a3b8; font-weight: 500; margin-top: 4px; }
 
     .premium-tooltip {
@@ -214,6 +301,26 @@ import { map, distinctUntilChanged, take } from 'rxjs';
     .count-big { font-size: 80px; font-weight: 900; color: var(--text-primary); line-height: 1; margin-bottom: 8px; }
     .count-unit { font-size: 16px; font-weight: 600; color: var(--text-muted); margin-bottom: 32px; }
     .start-btn { padding: 18px 48px; font-size: 18px; font-weight: 800; border-radius: 16px; box-shadow: 0 10px 25px rgba(var(--primary-rgb), 0.2); }
+
+    .quiz-promo { 
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); 
+      border-radius: 24px; padding: 24px; border: 1px solid #bfdbfe;
+      display: flex; align-items: center; justify-content: space-between; gap: 20px;
+      margin-top: 10px;
+    }
+    .promo-content { display: flex; align-items: center; gap: 20px; }
+    .promo-icon { font-size: 32px; background: white; width: 60px; height: 60px; border-radius: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1); }
+    .promo-info h3 { font-size: 17px; font-weight: 800; color: #1e40af; margin-bottom: 4px; }
+    .promo-info p { font-size: 14px; color: #3b82f6; margin: 0; }
+    .quiz-btn { background: #2563eb; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; &:hover { background: #1d4ed8; transform: translateY(-2px); } }
+    .quiz-btn.practice { background: #10b981; &:hover { background: #059669; } }
+    
+    .quiz-promo.empty {
+      background: #f8fafc; border-color: #e2e8f0;
+      .promo-icon { background: #f1f5f9; box-shadow: none; }
+      .promo-info h3 { color: #64748b; }
+      .promo-info p { color: #94a3b8; }
+    }
 
     .empty-sync { padding: 40px; }
     .empty-icon { font-size: 48px; margin-bottom: 16px; }
@@ -296,16 +403,28 @@ import { map, distinctUntilChanged, take } from 'rxjs';
 })
 export class SmartReviewComponent implements OnInit, OnDestroy {
   public vocabService = inject(VocabularyService);
-  private auth = inject(AuthService);
+  public auth = inject(AuthService);
   private notification = inject(NotificationService);
   private router = inject(Router);
   private cd = inject(ChangeDetectorRef);
 
+  get xpPercentage(): number {
+    const user = this.auth.userSignal();
+    if (!user) return 0;
+    const currentXp = user.xp || 0;
+    const level = user.level || 1;
+    const xpNeeded = level * 100;
+    return Math.min(Math.round((currentXp / xpNeeded) * 100), 100);
+  }
+
   stats: any = null;
   displayStats = { dueCount: 0, totalCount: 0, masteredCount: 0, forecast: [] as any[] };
   showStudyModal = false;
+  showQuizModal = false;
   studySessionWords: any[] = [];
+  quizWords: any[] = [];
   studyStats: any = null;
+  newWordsCount = 0;
   
   private rafId?: number;
 
@@ -313,7 +432,11 @@ export class SmartReviewComponent implements OnInit, OnDestroy {
     this.vocabService.stats$.pipe(
       distinctUntilChanged((p, c) => !p || !c ? false : p.dueCount===c.dueCount && p.totalCount===c.totalCount)
     ).subscribe(s => { if (s) { this.stats = s; this.animateStats(s); } });
+    this.vocabService.vocab$.subscribe(v => {
+      this.newWordsCount = v.filter(w => w.repetitions === 0).length;
+    });
     this.vocabService.getStudyStats(true).subscribe(stats => { this.studyStats = stats; });
+    this.auth.refreshProfile().subscribe();
     this.syncData();
   }
 
@@ -392,6 +515,7 @@ export class SmartReviewComponent implements OnInit, OnDestroy {
   syncData() {
     this.vocabService.refreshVocabulary(true).subscribe();
     this.vocabService.getStudyStats(true).subscribe(stats => { this.studyStats = stats; });
+    this.auth.refreshProfile().subscribe();
   }
 
   getBarHeight(count: number): number {
@@ -413,4 +537,36 @@ export class SmartReviewComponent implements OnInit, OnDestroy {
   }
 
   onSessionClose() { this.showStudyModal = false; this.syncData(); }
+
+  startQuiz() {
+    this.vocabService.vocab$.pipe(take(1)).subscribe(v => {
+       this.quizWords = v.filter(w => w.repetitions === 0).slice(0, 10); // Quiz up to 10 new words
+       if (this.quizWords.length > 0) {
+         this.showQuizModal = true;
+       }
+    });
+  }
+
+  startPracticeQuiz() {
+    this.vocabService.vocab$.pipe(take(1)).subscribe(v => {
+       if (v.length === 0) {
+         this.notification.show('Add some words first to start a practice quiz!');
+         return;
+       }
+       // Shuffle and pick 10 random words for practice
+       this.quizWords = [...v].sort(() => 0.5 - Math.random()).slice(0, 10);
+       this.showQuizModal = true;
+    });
+  }
+
+  onQuizResults(results: { vocabularyId: string, isCorrect: boolean }[]) {
+    this.vocabService.recordQuizResults(results).subscribe({
+      next: () => {
+        this.showQuizModal = false;
+        this.notification.show('SRS progress updated based on quiz results!', 'success');
+        this.syncData();
+      },
+      error: () => this.notification.show('Failed to save quiz results', 'error')
+    });
+  }
 }

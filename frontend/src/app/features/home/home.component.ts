@@ -335,6 +335,7 @@ export class HomeComponent implements OnInit {
     // Only sync vocabulary and profile once on init or when user state actually changes
     this.authService.currentUser$.subscribe((user: any) => {
       if (user) {
+        this.authService.refreshProfile().subscribe();
         this.vocabService.refreshVocabulary(true).subscribe();
         this.vocabService.getStudyStats(true).subscribe(res => this.studyStats.set(res));
       } else {

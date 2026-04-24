@@ -129,9 +129,18 @@ export class FlashcardsService {
 
     const heatmap = Object.entries(dailyMap).map(([date, count]) => ({ date, count }));
 
+    // Calculate Quiz Accuracy (based on records with rating 0 or 2, which are the ones we mapped)
+    // Actually, it's better to just look at all review history and see the distribution
+    const totalReviews = history.length;
+    const correctReviews = (await this.prisma.reviewHistory.count({
+        where: { user_id: userId, rating: { gte: 2 } }
+    }));
+    const accuracy = totalReviews > 0 ? Math.round((correctReviews / totalReviews) * 100) : 0;
+
     return { 
       streak, 
       heatmap,
+      accuracy,
       todayCount: history.filter(h => h.created_at.toISOString().split('T')[0] === today).length
     };
   }
@@ -264,5 +273,25 @@ export class FlashcardsService {
     return this.prisma.userVocabulary.delete({
       where: { id }
     });
+  }
+
+  async recordQuizResults(userId: string, results: { vocabularyId: string, isCorrect: boolean }[]) {
+    const records: any[] = [];
+    for (const res of results) {
+      const word = await this.prisma.userVocabulary.findUnique({ where: { id: res.vocabularyId } });
+      if (!word || word.user_id !== userId) continue;
+
+      // Map isCorrect to SRS rating: Correct -> 2 (Good), Wrong -> 0 (Again)
+      const rating = res.isCorrect ? 2 : 0;
+      
+      // Update User XP (Bonus 10 XP for correct quiz answer, already handled 5 in processReview, so add 5 more)
+      if (res.isCorrect) {
+        await this.usersService.addXp(userId, 5);
+      }
+
+      const updated = await this.processReview(res.vocabularyId, rating);
+      if (updated) records.push(updated);
+    }
+    return records;
   }
 }
