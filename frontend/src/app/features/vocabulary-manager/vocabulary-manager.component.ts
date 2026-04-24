@@ -334,9 +334,13 @@ export class VocabularyManagerComponent implements OnInit {
 
     // Filter
     if (this.activeFilter === 'due') {
-      result = result.filter(v => this.isDue(v));
+      const endOfToday = new Date();
+      endOfToday.setHours(23, 59, 59, 999);
+      result = result.filter(v => new Date(v.next_review) <= endOfToday);
     } else if (this.activeFilter === 'learning') {
-      result = result.filter(v => !this.isDue(v));
+      const endOfToday = new Date();
+      endOfToday.setHours(23, 59, 59, 999);
+      result = result.filter(v => new Date(v.next_review) > endOfToday);
     } else if (this.activeFilter === 'favorites') {
       result = result.filter(v => v.is_favorite);
     }
@@ -359,7 +363,10 @@ export class VocabularyManagerComponent implements OnInit {
   }
 
   isDue(item: UserVocabulary): boolean {
-    return new Date(item.next_review) <= new Date();
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+    const nextReview = new Date(item.next_review);
+    return nextReview <= endOfToday;
   }
 
 

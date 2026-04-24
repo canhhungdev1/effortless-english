@@ -10,10 +10,13 @@ export class FlashcardsService {
   ) {}
 
   async getDueWords(userId: string) {
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+    
     return this.prisma.userVocabulary.findMany({
       where: {
         user_id: userId,
-        next_review: { lte: new Date() }
+        next_review: { lte: endOfToday }
       },
       orderBy: { next_review: 'asc' }
     });
@@ -21,6 +24,9 @@ export class FlashcardsService {
 
   async getReviewStats(userId: string) {
     const now = new Date();
+    const endOfToday = new Date(now);
+    endOfToday.setHours(23, 59, 59, 999);
+
     const totalCount = await this.prisma.userVocabulary.count({
       where: { user_id: userId }
     });
@@ -28,7 +34,7 @@ export class FlashcardsService {
     const dueCount = await this.prisma.userVocabulary.count({
       where: {
         user_id: userId,
-        next_review: { lte: now }
+        next_review: { lte: endOfToday }
       }
     });
 

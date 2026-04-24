@@ -386,7 +386,12 @@ export class SmartReviewComponent implements OnInit, OnDestroy {
   }
 
   startReview(mode: 'due' | 'all') {
-    this.vocabService.vocab$.pipe(take(1), map(v => mode === 'due' ? v.filter(w => new Date(w.next_review) <= new Date()) : v)).subscribe(words => {
+    this.vocabService.vocab$.pipe(take(1), map(v => {
+      if (mode === 'all') return v;
+      const endOfToday = new Date();
+      endOfToday.setHours(23, 59, 59, 999);
+      return v.filter(w => new Date(w.next_review) <= endOfToday);
+    })).subscribe(words => {
       if (words.length === 0) { this.notification.show('No words to practice!'); return; }
       this.studySessionWords = words; this.showStudyModal = true;
     });

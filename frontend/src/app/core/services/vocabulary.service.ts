@@ -228,8 +228,10 @@ export class VocabularyService {
       );
     } else {
       const localData = this.getLocalVocab();
-      const now = new Date();
-      const dueCount = localData.filter(v => new Date(v.next_review) <= now).length;
+      const endOfToday = new Date();
+      endOfToday.setHours(23, 59, 59, 999);
+      
+      const dueCount = localData.filter(v => new Date(v.next_review) <= endOfToday).length;
       const stats = {
         dueCount,
         totalCount: localData.length,
