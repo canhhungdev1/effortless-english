@@ -213,7 +213,8 @@ import { map, distinctUntilChanged, take, BehaviorSubject } from 'rxjs';
 
     <app-quick-game
       *ngIf="showQuizModal"
-      [words]="quizWords"
+      [words]="(vocabService.vocab$ | async) || []"
+      [quizSelection]="quizWords"
       (results)="onQuizResults($event)"
       (close)="showQuizModal = false">
     </app-quick-game>

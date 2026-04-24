@@ -246,6 +246,7 @@ interface QuizOption {
 })
 export class QuickGameComponent implements OnInit {
   @Input() words: any[] = [];
+  @Input() quizSelection: any[] = []; // NEW: Specify which words to actually quiz
   @Output() results = new EventEmitter<{ vocabularyId: string, isCorrect: boolean }[]>();
   @Output() close = new EventEmitter<void>();
 
@@ -303,11 +304,15 @@ export class QuickGameComponent implements OnInit {
   }
 
   restart() {
-    if (!this.words || this.words.length < 2) {
-      console.warn('Not enough words for a quiz');
-      this.quizDeck = this.words || [];
+    const targetPool = (this.quizSelection && this.quizSelection.length > 0) 
+      ? this.quizSelection 
+      : this.words;
+
+    if (!targetPool || targetPool.length === 0) {
+      console.warn('No words to quiz');
+      this.quizDeck = [];
     } else {
-        this.quizDeck = [...this.words].sort(() => Math.random() - 0.5);
+      this.quizDeck = [...targetPool].sort(() => Math.random() - 0.5);
     }
     
     this.currentIndex = 0;
@@ -331,12 +336,32 @@ export class QuickGameComponent implements OnInit {
     if (!current) return;
 
     const correctOption: QuizOption = { text: current.translation, isCorrect: true };
+    
+    // Use the full 'words' pool to find distractors, excluding the current target word
     const fieldOptions = this.words
-      .filter(w => w.word !== current.word)
+      .filter(w => w.word !== current.word && w.translation !== current.translation)
       .map(w => ({ text: w.translation, isCorrect: false }));
 
-    // Shuffle field options and pick 3
-    const distractors = fieldOptions.sort(() => Math.random() - 0.5).slice(0, 3);
+    // Fallback distractors if we don't have enough words in the pool
+    const fallbacks = [
+      'Không xác định', 'Cái bàn', 'Học tập', 'Vui vẻ', 'Thành công', 
+      'Cố gắng', 'Trải nghiệm', 'Kiến thức'
+    ].map(t => ({ text: t, isCorrect: false }));
+
+    const distractorPool = [...fieldOptions, ...fallbacks];
+
+    // Shuffle and pick 3 unique distractors
+    const distractors: QuizOption[] = [];
+    const usedTexts = new Set([correctOption.text]);
+    
+    const shuffledPool = distractorPool.sort(() => Math.random() - 0.5);
+    for (const d of shuffledPool) {
+      if (distractors.length >= 3) break;
+      if (!usedTexts.has(d.text)) {
+        distractors.push(d);
+        usedTexts.add(d.text);
+      }
+    }
     
     // Combine and shuffle all 4
     this.options = [correctOption, ...distractors].sort(() => Math.random() - 0.5);

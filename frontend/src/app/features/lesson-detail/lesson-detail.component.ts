@@ -170,8 +170,9 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
 
         <!-- Quick Game Overlay -->
         <app-quick-game 
-          *ngIf="showQuickGame && lesson()?.vocabulary?.keywords" 
-          [words]="lesson()!.vocabulary!.keywords" 
+          *ngIf="showQuickGame && (lesson()?.vocabulary?.keywords)" 
+          [words]="(vocabService.vocab$ | async) || []"
+          [quizSelection]="lesson()!.vocabulary!.keywords" 
           (close)="showQuickGame = false" />
       </div>
     </div>
@@ -262,7 +263,7 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
       border-radius: var(--radius-lg);
       position: relative;
     }
-    .vocab-paragraph { padding: 14px 20px; border-radius: var(--radius-sm); text-align: justify; &.highlighted { border-left: 3px solid var(--highlight-border); background: var(--highlight-bg); p { color: var(--highlight-text); font-weight: 600; } } &.clickable-line { cursor: pointer; } }
+    .vocab-paragraph { padding: 14px 20px; border-radius: var(--radius-sm); text-align: justify; &.highlighted { border-left: 3px solid var(--highlight-border); background: var(--highlight-bg); p { color: var(--highlight-text); font-weight: 800; } } &.clickable-line { cursor: pointer; } }
     .keywords-panel { 
       background: var(--bg-white); 
       border: 1px solid var(--border-light); 
@@ -389,7 +390,7 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
       box-shadow: var(--shadow-sm);
       position: relative;
     }
-    .story-line { padding: 14px 20px; text-align: justify; &.clickable-line { cursor: pointer; } &.highlighted { border-left: 3px solid var(--highlight-border); background: var(--highlight-bg); p { color: var(--highlight-text); font-weight: 600; } } }
+    .story-line { padding: 14px 20px; text-align: justify; &.clickable-line { cursor: pointer; } &.highlighted { border-left: 3px solid var(--highlight-border); background: var(--highlight-bg); p { color: var(--highlight-text); font-weight: 800; } } }
     .empty-state { text-align: center; color: var(--text-muted); padding: 40px; font-style: italic; }
     
     @media (max-width: 900px) {
@@ -460,7 +461,7 @@ export class LessonDetailComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private courseService: CourseService,
-    private vocabService: VocabularyService,
+    public vocabService: VocabularyService,
     private notification: NotificationService,
     private http: HttpClient
   ) { }
