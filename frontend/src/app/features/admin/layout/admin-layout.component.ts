@@ -49,7 +49,7 @@ import { inject } from '@angular/core';
 
         <div class="sidebar-footer">
           <div class="user-info" *ngIf="authService.userSignal() as user">
-            <div class="avatar">{{ user.name.charAt(0).toUpperCase() }}</div>
+            <div class="avatar">{{ (user.name || 'U').charAt(0).toUpperCase() }}</div>
             <div class="details" *ngIf="!isSidebarCollapsed()">
               <span class="name">{{ user.name }}</span>
               <span class="role">{{ user.role }}</span>
