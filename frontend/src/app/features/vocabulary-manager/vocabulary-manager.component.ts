@@ -40,6 +40,14 @@ import { FlashcardSessionComponent } from '../../shared/components/flashcards/fl
           </div>
         </div>
       </div>
+      
+      <div class="active-filter-banner" *ngIf="activeFilter === 'date' && filterDate">
+        <div class="banner-content">
+          <span class="banner-icon">📅</span>
+          <span class="banner-text">Showing words scheduled for <strong>{{ filterDate | date:'fullDate' }}</strong></span>
+        </div>
+        <button class="clear-banner" (click)="setFilter('all')">View All Words</button>
+      </div>
 
       <div class="manager-controls">
         <div class="search-box">
@@ -259,8 +267,23 @@ import { FlashcardSessionComponent } from '../../shared/components/flashcards/fl
       h2 { font-size: 24px; font-weight: 700; color: var(--text-primary); margin-bottom: 12px; }
       p { color: var(--text-muted); margin-bottom: 32px; }
     }
-
-
+    
+    .active-filter-banner {
+      display: flex; justify-content: space-between; align-items: center;
+      background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 16px;
+      padding: 12px 24px; margin-bottom: 24px; animation: slideDown 0.3s ease-out;
+    }
+    .banner-content { display: flex; align-items: center; gap: 12px; }
+    .banner-icon { font-size: 20px; }
+    .banner-text { color: #1e40af; font-size: 15px; }
+    .banner-text strong { font-weight: 700; color: #1d4ed8; }
+    .clear-banner {
+      font-size: 13px; font-weight: 700; color: #2563eb; background: white;
+      padding: 6px 16px; border-radius: 100px; border: 1px solid #bfdbfe;
+      cursor: pointer; transition: 0.2s;
+      &:hover { background: #dbeafe; transform: translateY(-1px); }
+    }
+    @keyframes slideDown { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
     @media (max-width: 768px) {
       .vocab-manager { padding: 20px; }
@@ -281,6 +304,7 @@ export class VocabularyManagerComponent implements OnInit {
   filteredVocab: UserVocabulary[] = [];
   searchQuery = '';
   activeFilter = 'all';
+  filterDate: string | null = null;
   
   pageSize = 12;
   itemsToShow = 12;
@@ -304,10 +328,19 @@ export class VocabularyManagerComponent implements OnInit {
     // Listen for query params to set active filter
     this.route.queryParamMap.subscribe(params => {
       const filter = params.get('filter');
-      if (filter && this.filters.some(f => f.key === filter)) {
+      const date = params.get('date');
+      
+      if (filter === 'date' && date) {
+        this.activeFilter = 'date';
+        this.filterDate = date;
+      } else if (filter && this.filters.some(f => f.key === filter)) {
         this.activeFilter = filter;
-        this.updateFilters();
+        this.filterDate = null;
+      } else {
+        this.activeFilter = 'all';
+        this.filterDate = null;
       }
+      this.updateFilters();
     });
   }
 
@@ -343,6 +376,11 @@ export class VocabularyManagerComponent implements OnInit {
       result = result.filter(v => new Date(v.next_review) > endOfToday);
     } else if (this.activeFilter === 'favorites') {
       result = result.filter(v => v.is_favorite);
+    } else if (this.activeFilter === 'date' && this.filterDate) {
+      result = result.filter(v => {
+        const d = new Date(v.next_review);
+        return d.toISOString().split('T')[0] === this.filterDate;
+      });
     }
 
     this.filteredVocab = result;
@@ -359,6 +397,7 @@ export class VocabularyManagerComponent implements OnInit {
 
   setFilter(key: string) {
     this.activeFilter = key;
+    if (key !== 'date') this.filterDate = null;
     this.updateFilters();
   }
 
@@ -410,9 +449,12 @@ export class VocabularyManagerComponent implements OnInit {
   }
 
   startStudy() {
-    // Determine which words to study based on filter or all
+    // If a specific filter is active, study those words. 
+    // Otherwise study all or due words.
     if (this.activeFilter === 'due') {
       this.studySessionWords = this.allVocab.filter(v => this.isDue(v));
+    } else if (this.activeFilter !== 'all') {
+      this.studySessionWords = [...this.filteredVocab];
     } else {
       this.studySessionWords = [...this.allVocab];
     }

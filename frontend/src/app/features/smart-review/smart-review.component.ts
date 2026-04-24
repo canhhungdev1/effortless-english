@@ -125,7 +125,7 @@ import { map, distinctUntilChanged, take } from 'rxjs';
         <div class="forecast-panel" *ngIf="displayStats.forecast">
           <h3>7-Day Workload Forecast</h3>
           <div class="forecast-chart">
-            <div *ngFor="let item of displayStats.forecast" class="bar-group">
+            <div *ngFor="let item of displayStats.forecast; let i = index" class="bar-group" (click)="onForecastClick(item, i)">
               <div class="bar-container">
                 <div class="bar" [style.height.%]="getBarHeight(item.count)">
                   <span class="bar-tooltip"><strong>{{ item.count }}</strong> words</span>
@@ -373,6 +373,21 @@ export class SmartReviewComponent implements OnInit, OnDestroy {
   }
 
   goToVocabulary(filter: string) { this.router.navigate(['/flashcards'], { queryParams: { filter } }); }
+  
+  onForecastClick(item: any, index: number) {
+    if (index === 0) {
+      // For Day 0 (Today), just use the "due" filter which include overdues
+      this.goToVocabulary('due');
+    } else {
+      // For future days, use a specific date filter
+      this.router.navigate(['/flashcards'], { 
+        queryParams: { 
+          filter: 'date', 
+          date: item.date 
+        } 
+      });
+    }
+  }
   
   syncData() {
     this.vocabService.refreshVocabulary(true).subscribe();
