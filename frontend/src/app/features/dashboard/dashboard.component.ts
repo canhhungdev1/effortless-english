@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { GamificationService, UserStats } from '../../core/services/gamification.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { NgApexchartsModule, ChartComponent } from 'ng-apexcharts';
+import { AdBannerComponent } from '../../shared/components/ad-banner/ad-banner.component';
 import {
   ApexAxisChartSeries,
   ApexChart,
@@ -36,7 +37,7 @@ export type ChartOptions = {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, NgApexchartsModule],
+  imports: [CommonModule, NgApexchartsModule, AdBannerComponent],
   template: `
     <div class="dashboard-container">
       <header class="dashboard-header">
@@ -75,6 +76,13 @@ export type ChartOptions = {
           </div>
         </div>
       </div>
+
+      <!-- Ad Section -->
+      <app-ad-banner 
+        title="Premium Access"
+        description="Support the free platform and unlock exclusive features."
+        imageUrl="/assets/ads/dashboard-inline.png">
+      </app-ad-banner>
 
       <!-- Main Chart -->
       <div class="chart-section glass-card" *ngIf="stats()">

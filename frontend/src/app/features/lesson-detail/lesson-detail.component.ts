@@ -11,13 +11,14 @@ import { VocabularyService } from '../../core/services/vocabulary.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { GamificationService } from '../../core/services/gamification.service';
 import { OnDestroy } from '@angular/core';
+import { AdBannerComponent } from '../../shared/components/ad-banner/ad-banner.component';
 
 type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
 
 @Component({
   selector: 'app-lesson-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, AudioPlayerComponent, FlashcardSessionComponent, QuickGameComponent],
+  imports: [CommonModule, RouterLink, AudioPlayerComponent, FlashcardSessionComponent, QuickGameComponent, AdBannerComponent],
   template: `
     <div class="lesson-detail" *ngIf="lesson()">
       <!-- Lesson Header -->
@@ -165,6 +166,13 @@ type StoryCategory = 'miniStories' | 'commentaries' | 'pointOfViews';
             </div>
           </div>
         </div>
+        
+        <!-- Bottom Ad Banner -->
+        <app-ad-banner 
+          [imageUrl]="'/assets/ads/sample-ad.png'"
+          title="Master English with Effortless Club"
+          description="Join over 1 million students learning with the #1 method in the world.">
+        </app-ad-banner>
         
         <!-- Flashcard Study Overlay -->
         <app-flashcard-session 

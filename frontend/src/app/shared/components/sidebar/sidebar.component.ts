@@ -2,11 +2,12 @@ import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
+import { AdBannerComponent } from '../ad-banner/ad-banner.component';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterLink, RouterLinkActive, AdBannerComponent],
   template: `
     <aside class="sidebar" 
            [class.open]="isOpen" 
@@ -67,6 +68,15 @@ import { AuthService } from '../../../core/auth/auth.service';
           </span>
         </div>
       </nav>
+
+      <div class="sidebar-ad">
+        <app-ad-banner 
+          type="sidebar"
+          title="Go Premium"
+          description="Support the community and hide all ads."
+          imageUrl="/assets/ads/sidebar-ad.png">
+        </app-ad-banner>
+      </div>
 
       <div class="sidebar-footer">
         <div class="auth-section" *ngIf="auth.currentUser$ | async as user; else loginTpl">
@@ -213,10 +223,16 @@ import { AuthService } from '../../../core/auth/auth.service';
       }
     }
 
+    
+    .sidebar-ad {
+      padding: 0 16px;
+      margin-top: auto;
+    }
+
     .sidebar-footer {
       padding: 16px 20px 24px;
       border-top: 1px solid var(--border-light);
-      margin-top: auto;
+      /* margin-top: auto; Removed as ad is now here */
     }
 
     .auth-section {
